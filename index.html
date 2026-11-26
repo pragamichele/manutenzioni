@@ -1,0 +1,755 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Manutenzioni da programmare</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Manutenzioni">
+<meta name="theme-color" content="#13212f">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<style>
+/* Layout: app a schermata singola. Testata scura da quadro elettrico con logo, barre che si nascondono scorrendo, schede con striscia di gravità, griglia a due colonne su PC. */
+:root{
+  --bg:#edf0f4; --surface:#ffffff; --surface-2:#f3f5f8; --fg:#142231; --muted:#5a6878; --line:#d5dce4;
+  --head:#13212f; --head-fg:#ffffff; --head-muted:#9fb3c6;
+  --shadow:0 1px 2px rgba(16,30,45,.06),0 6px 18px rgba(16,30,45,.06);
+  --accent:#1f6fb2; --accent-fg:#ffffff; --accent-soft:#e1edf8;
+  --g1:#2d8650; --g2:#a87c08; --g3:#cc5a16; --g4:#c02d28;
+  --g1-soft:#e2f2e8; --g2-soft:#f8efd2; --g3-soft:#fbe6d8; --g4-soft:#f9dedd;
+  --warn-bg:#fdebd9; --warn-fg:#7f350a; --ok:#2d8650;
+  --f-display:'Barlow Condensed','Arial Narrow',system-ui,sans-serif;
+  --f-body:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
+  --nav-h:66px;
+}
+@media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+  --bg:#0e141a; --surface:#17212b; --surface-2:#1e2934; --fg:#e7edf3; --muted:#9aa7b4; --line:#2b3744;
+  --head:#0a1118; --head-fg:#ffffff; --head-muted:#8ea3b7; --shadow:0 1px 2px rgba(0,0,0,.3);
+  --accent:#6aa8ea; --accent-fg:#0b1520; --accent-soft:#1c3048;
+  --g1:#5cc184; --g2:#e0b73a; --g3:#f08a48; --g4:#f0625c;
+  --g1-soft:#16301f; --g2-soft:#332a0c; --g3-soft:#3a2214; --g4-soft:#3d1817;
+  --warn-bg:#3a2214; --warn-fg:#f7c39c; --ok:#5cc184; color-scheme:dark } }
+:root[data-theme="dark"]{
+  --bg:#0e141a; --surface:#17212b; --surface-2:#1e2934; --fg:#e7edf3; --muted:#9aa7b4; --line:#2b3744;
+  --head:#0a1118; --head-fg:#ffffff; --head-muted:#8ea3b7; --shadow:0 1px 2px rgba(0,0,0,.3);
+  --accent:#6aa8ea; --accent-fg:#0b1520; --accent-soft:#1c3048;
+  --g1:#5cc184; --g2:#e0b73a; --g3:#f08a48; --g4:#f0625c;
+  --g1-soft:#16301f; --g2-soft:#332a0c; --g3-soft:#3a2214; --g4-soft:#3d1817;
+  --warn-bg:#3a2214; --warn-fg:#f7c39c; --ok:#5cc184; color-scheme:dark }
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:17px;line-height:1.45;-webkit-text-size-adjust:100%}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--head)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--head);color:var(--head-fg);border-bottom:3px solid var(--accent);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px;
+  display:flex;align-items:center;justify-content:space-between;gap:12px;transition:transform .22s ease}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}
+.logochip{height:38px;max-width:110px;background:#fff;border-radius:8px;padding:4px 7px;display:flex;align-items:center}
+.logochip img{max-height:30px;max-width:96px;width:auto;display:block}
+.mark{width:36px;height:36px;border-radius:9px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}
+.mark svg{width:22px;height:22px}
+.bt{display:flex;flex-direction:column;line-height:1;min-width:0}
+.b1{font-family:var(--f-display);font-weight:700;font-size:23px;letter-spacing:.02em;text-transform:uppercase}
+.b2{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--head-muted);margin-top:3px}
+.role{border:1.5px solid var(--head-muted);background:transparent;color:inherit;border-radius:20px;padding:5px 12px;font-weight:600;font-size:13px;letter-spacing:.05em;text-transform:uppercase;flex:none}
+body.hide-bars .top{transform:translateY(calc(-100% - 4px))}
+body.hide-bars nav{transform:translateY(110%)}
+
+main{max-width:980px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:14px calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 20px);display:flex;flex-direction:column;gap:14px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow)}
+.tile b{font-family:var(--f-display);font-size:36px;line-height:1;color:var(--accent);font-variant-numeric:tabular-nums}
+.tile span{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);line-height:1.2}
+.tile.t4 b{color:var(--g4)} .tile.t2 b{color:var(--g2)}
+h1{font-family:var(--f-display);font-weight:700;font-size:28px;line-height:1.1;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:700;font-size:21px;margin:0;letter-spacing:.01em}
+.muted{color:var(--muted)}
+.lbl{display:block;font-size:13px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.hint{font-size:14px;color:var(--muted);margin:6px 0 0}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.field{display:flex;flex-direction:column;min-width:0}
+input[type=text],input[type=password],input:not([type]),select,textarea{
+  width:100%;min-height:50px;padding:11px 13px;border:1.5px solid var(--line);border-radius:9px;background:var(--surface);font-size:17px}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);outline:none;box-shadow:0 0 0 3px var(--accent-soft)}
+textarea{resize:none;overflow:hidden;min-height:96px;line-height:1.45;display:block}
+textarea.short{min-height:50px}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:52px;padding:0 18px;border-radius:10px;border:1.5px solid var(--accent);
+  background:var(--accent);color:var(--accent-fg);font-weight:700;font-size:17px;text-align:center;width:100%}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--fg);font-weight:600}
+.btn.danger{background:var(--g4);border-color:var(--g4);color:#fff}
+.btn.small{min-height:42px;font-size:15px;width:auto;padding:0 14px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row>.btn{flex:1 1 160px}
+
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:0 15px;border:1.5px solid var(--line);border-radius:22px;background:var(--surface);font-weight:600;font-size:16px}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.grav{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+@media (max-width:420px){.grav{grid-template-columns:repeat(2,1fr)}}
+.gbtn{min-height:56px;border-radius:10px;border:2px solid var(--gc);background:var(--surface);color:var(--fg);font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px}
+.gbtn::before{content:"";width:12px;height:12px;border-radius:50%;background:var(--gc)}
+.gbtn[aria-pressed="true"]{background:var(--gc);color:#fff}
+.gbtn[aria-pressed="true"]::before{background:#fff}
+.g1{--gc:var(--g1);--gs:var(--g1-soft)} .g2{--gc:var(--g2);--gs:var(--g2-soft)} .g3{--gc:var(--g3);--gs:var(--g3-soft)} .g4{--gc:var(--g4);--gs:var(--g4-soft)}
+
+.warn{background:var(--warn-bg);color:var(--warn-fg);border-radius:10px;padding:12px 14px;font-weight:600;font-size:15px}
+.banner{background:var(--accent-soft);border-radius:10px;padding:12px 14px;display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;font-size:15px}
+.err{color:var(--g4);font-weight:600;font-size:15px;margin:0}
+
+/* Lista */
+.summary{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline}
+.summary b{font-family:var(--f-display);font-size:30px;line-height:1;margin-right:4px}
+.filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.filters{grid-template-columns:1fr 1fr}.filters .q{grid-column:1/-1}}
+.filters select,.filters input{min-height:46px;font-size:16px}
+.list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:10px;align-items:start}
+.card{display:grid;grid-template-columns:6px 1fr;text-align:left;width:100%;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:var(--shadow)}
+.list .empty{grid-column:1/-1}
+.card:active{background:var(--surface-2)}
+.stripe{background:var(--gc)}
+.cbody{display:flex;flex-direction:column;gap:4px;padding:12px 14px;min-width:0}
+.crow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.code{font-family:var(--f-mono);font-weight:600;font-size:15px}
+.pill{display:inline-flex;align-items:center;min-height:24px;padding:0 9px;border-radius:12px;font-size:13px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;background:var(--gs);color:var(--gc)}
+.pill.st{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.pill.chiusa{color:var(--ok)}
+.ctitle{font-weight:700;font-size:18px;line-height:1.25}
+.cprob{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.cmeta{font-size:14px;color:var(--muted)}
+.empty{text-align:center;padding:32px 16px;color:var(--muted)}
+
+/* Dettaglio */
+.back{background:none;border:none;color:var(--accent);font-weight:700;font-size:17px;padding:6px 0;align-self:flex-start}
+.dhead{border-left:7px solid var(--gc);padding-left:12px;display:flex;flex-direction:column;gap:6px}
+.kv{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 16px}
+.kv div{min-width:0}
+.kv dt{font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.kv dd{margin:2px 0 0;font-weight:600;overflow-wrap:anywhere}
+.prose{white-space:pre-wrap;overflow-wrap:anywhere;margin:0}
+.lav{display:flex;flex-direction:column;gap:0}
+.lavitem{display:grid;grid-template-columns:44px 1fr;gap:6px;align-items:start;padding:10px 0;border-top:1px solid var(--line)}
+.lavitem:first-child{border-top:none}
+.check{width:40px;height:40px;border-radius:9px;border:2px solid var(--line);background:var(--surface);display:flex;align-items:center;justify-content:center}
+.check svg{width:22px;height:22px;opacity:0}
+.lavitem.done .check{background:var(--ok);border-color:var(--ok);color:#fff}
+.lavitem.done .check svg{opacity:1}
+.lavitem.done .lt{text-decoration:line-through;color:var(--muted)}
+.lt{white-space:pre-wrap;overflow-wrap:anywhere;padding-top:8px}
+.lby{font-size:13px;color:var(--muted)}
+.note{border-left:3px solid var(--line);padding-left:12px}
+.note .by{font-size:13px;color:var(--muted)}
+.lavedit{display:grid;grid-template-columns:1fr 44px;gap:8px;align-items:start}
+.iconbtn{width:44px;height:50px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-size:22px;line-height:1}
+.closed{background:var(--g1-soft);border-radius:10px;padding:12px 14px}
+
+/* Codice macchina */
+.or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
+.filebtn{position:relative;overflow:hidden}
+.filebtn input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.mach{display:flex;justify-content:space-between;gap:10px;align-items:center;background:var(--surface-2);border-radius:10px;padding:10px 12px}
+.mach .code{font-size:20px}
+
+/* Nav */
+nav{position:fixed;left:0;right:0;bottom:0;z-index:9;background:var(--surface);border-top:1px solid var(--line);transition:transform .22s ease;box-shadow:0 -4px 16px rgba(16,30,45,.06);
+  padding-bottom:env(safe-area-inset-bottom,0px);padding-left:max(8px,env(safe-area-inset-left,0px));padding-right:max(8px,env(safe-area-inset-right,0px))}
+nav .in{max-width:720px;margin:0 auto;height:var(--nav-h);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;align-items:center}
+nav button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:13px;font-weight:600;color:var(--muted);padding:6px 0}
+nav button svg{width:26px;height:26px}
+nav button[aria-current="page"]{color:var(--accent)}
+nav .plus{background:var(--accent);color:var(--accent-fg);border-radius:14px;height:52px;justify-content:center}
+nav .plus[aria-current="page"]{color:var(--accent-fg);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* Modali */
+.overlay{position:fixed;inset:0;z-index:20;background:rgba(8,14,20,.55);display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--surface);width:100%;max-width:560px;border-radius:16px 16px 0 0;padding:20px max(16px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));
+  display:flex;flex-direction:column;gap:14px;max-height:92vh;overflow:auto}
+@media (min-width:600px){.overlay{align-items:center}.sheet{border-radius:16px}}
+.scanbox{position:relative;border-radius:12px;overflow:hidden;background:#000;aspect-ratio:1/1;max-width:100%}
+.scanbox video{width:100%;height:100%;object-fit:cover;display:block}
+.scanbox::after{content:"";position:absolute;inset:18%;border:3px solid #fff;border-radius:14px;box-shadow:0 0 0 999px rgba(0,0,0,.35)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--nav-h) + env(safe-area-inset-bottom,0px) + 14px);z-index:30;
+  background:var(--fg);color:var(--bg);padding:12px 18px;border-radius:10px;font-weight:600;font-size:15px;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+@media (prefers-reduced-motion:no-preference){.sheet{animation:up .18s ease-out}@keyframes up{from{transform:translateY(24px);opacity:.6}}}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <span class="brand"><span class="logochip" id="logoChip" hidden><img id="logoImg" alt="Logo aziendale"></span><span class="mark" id="logoMark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4M9 15.5l2 2 4-4"/></svg></span><span class="bt"><span class="b1">Manutenzioni</span><span class="b2">da programmare</span></span></span>
+  <button class="role" id="roleChip" data-act="go" data-v="impostazioni">Manutentore</button>
+</header>
+<main id="main"></main>
+<nav aria-label="Sezioni">
+  <div class="in">
+    <button data-act="go" data-v="lista" id="n-lista"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.2"/><circle cx="3.5" cy="12" r="1.2"/><circle cx="3.5" cy="18" r="1.2"/></svg>Interventi</button>
+    <button data-act="go" data-v="nuova" id="n-nuova" class="plus"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nuova</button>
+    <button data-act="go" data-v="scambio" id="n-scambio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-4-4M20 16H6l4 4"/></svg>Invia / Ricevi</button>
+    <button data-act="go" data-v="impostazioni" id="n-impostazioni"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/></svg>Profilo</button>
+  </div>
+</nav>
+<div class="overlay" id="modal" hidden></div>
+<div class="overlay" id="scanner" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Scansione QR">
+    <h2>Inquadra il QR della macchina</h2>
+    <div class="scanbox"><video id="scanVideo" playsinline muted></video></div>
+    <button class="btn ghost" data-act="stopScan">Annulla</button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+'use strict';
+const KEY='storico-guasti-v1';
+const TIPI=['Meccanico','Elettrico','Pneumatico','Oleodinamico','Software / PLC','Igienico-sanitario','Sicurezza','Altro'];
+const GRAV={1:'Bassa',2:'Media',3:'Alta',4:'Critica'};
+const QUANDO=['Appena possibile','Prossimo fermo settimanale','Manutenzione programmata','Manutenzione annuale'];
+const STATI={aperta:'Da programmare',attesa:'In attesa ricambio',chiusa:'Completata'};
+const PERIODI={oggi:'Modificate oggi','7':'Ultimi 7 giorni',ultimo:"Dall'ultimo invio",aperte:'Tutte le aperte',tutte:'Tutte'};
+const inFrame=(()=>{try{return window.self!==window.top}catch(e){return true}})();
+const $=s=>document.querySelector(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const nowIso=()=>new Date().toISOString();
+function fmt(iso){if(!iso)return '';const d=new Date(iso);return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${String(d.getFullYear()).slice(2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`}
+function stamp(d=new Date()){return `${String(d.getFullYear()).slice(2)}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}`}
+function initials(n){return ((n||'').trim().split(/\s+/).map(w=>w[0]||'').join('').slice(0,3).toUpperCase())||'XX'}
+function newId(){return `${initials(S.settings.nome)}-${stamp()}-${Math.random().toString(36).slice(2,4).toUpperCase()}`}
+
+/* ---------- Dati ---------- */
+function blank(){return{settings:{nome:'',ruolo:'manutentore',pin:'',ultimoInvio:''},macchine:{},segn:[]}}
+function seed(b){
+  const t=h=>new Date(Date.now()-h*36e5).toISOString();
+  b.macchine={
+    'TRT-0412':{codice:'TRT-0412',descrizione:'Formatrice tortellini',linea:'Linea 2'},
+    'CNF-0233':{codice:'CNF-0233',descrizione:'Termosaldatrice vaschette',linea:'Linea 2'},
+    'GN-0107':{codice:'GN-0107',descrizione:'Estrusore gnocchi',linea:'Linea 5'}};
+  b.segn=[
+    {id:'ESEMPIO-1',esempio:true,codice:'TRT-0412',descrizione:'Formatrice tortellini',linea:'Linea 2',tipo:'Meccanico',gravita:3,quando:'Prossimo fermo settimanale',
+     problema:'Gioco sul cuscinetto lato trasmissione dei rulli calibratori. Rumore in aumento da inizio turno e supporto più caldo del solito. La macchina lavora, va controllata al fermo.',
+     lavori:[{t:'Sostituire cuscinetto lato trasmissione rullo superiore',fatto:false},{t:'Controllare allineamento rulli calibratori',fatto:false},{t:'Verificare tensione cinghia',fatto:true,da:'Esempio',il:t(5)}],
+     ricambi:'Cuscinetto 6205-2RS (2 pz)',note:[{t:'Rumore ancora presente a fine turno, non peggiorato.',da:'Esempio',il:t(3)}],autore:'Esempio',creata:t(26),aggiornata:t(3),stato:'aperta'},
+    {id:'ESEMPIO-2',esempio:true,codice:'CNF-0233',descrizione:'Termosaldatrice vaschette',linea:'Linea 2',tipo:'Igienico-sanitario',gravita:2,quando:'Manutenzione programmata',
+     problema:'Guarnizione del carter lato uscita rovinata, si sta staccando in un punto.',lavori:[{t:'Sostituire guarnizione carter lato uscita',fatto:false}],
+     ricambi:'Guarnizione carter (codice da verificare)',note:[],autore:'Esempio',creata:t(50),aggiornata:t(20),stato:'attesa'},
+    {id:'ESEMPIO-3',esempio:true,codice:'GN-0107',descrizione:'Estrusore gnocchi',linea:'Linea 5',tipo:'Elettrico',gravita:1,quando:'Manutenzione annuale',
+     problema:'Lampada spia "pronto" sul quadro bordo macchina bruciata.',lavori:[{t:'Sostituire lampada spia',fatto:false}],ricambi:'',note:[],autore:'Esempio',creata:t(80),aggiornata:t(80),stato:'aperta'}];
+}
+function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(blank(),JSON.parse(r))}catch(e){}const b=blank();seed(b);return b}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const isResp=()=>S.settings.ruolo==='responsabile';
+const find=id=>S.segn.find(s=>s.id===id);
+
+/* ---------- Stato interfaccia ---------- */
+let view='lista',param=null,draft=null;
+const filtri={stato:'aperte',grav:'',linea:'',autore:'',q:''};
+const scambio={periodo:'7'};
+
+function render(){
+  $('#roleChip').textContent=isResp()?'Responsabile':'Manutentore';
+  const hasLogo=!!S.settings.logo;$('#logoChip').hidden=!hasLogo;$('#logoMark').hidden=hasLogo;if(hasLogo&&$('#logoImg').src!==S.settings.logo)$('#logoImg').src=S.settings.logo;
+  document.body.classList.remove('hide-bars');
+  ['lista','nuova','scambio','impostazioni'].forEach(v=>{const b=$('#n-'+v);const on=view===v||(v==='lista'&&view==='dettaglio');on?b.setAttribute('aria-current','page'):b.removeAttribute('aria-current')});
+  const f={lista:vLista,dettaglio:vDettaglio,nuova:vNuova,scambio:vScambio,impostazioni:vImpostazioni}[view];
+  $('#main').innerHTML=f();
+  document.querySelectorAll('textarea.grow').forEach(grow);
+  if(view==='nuova')updWarn();
+}
+function go(v,p){view=v;param=p||null;render();window.scrollTo(0,0)}
+function grow(t){t.style.height='auto';t.style.height=(t.scrollHeight+3)+'px'}
+
+/* ---------- Lista ---------- */
+function filtered(){
+  const q=filtri.q.trim().toLowerCase();
+  return S.segn.filter(s=>{
+    if(filtri.stato==='aperte'&&s.stato==='chiusa')return false;
+    if(filtri.stato==='attesa'&&s.stato!=='attesa')return false;
+    if(filtri.stato==='chiuse'&&s.stato!=='chiusa')return false;
+    if(filtri.grav&&String(s.gravita)!==filtri.grav)return false;
+    if(filtri.linea&&s.linea!==filtri.linea)return false;
+    if(filtri.autore&&s.autore!==filtri.autore)return false;
+    if(q&&!(s.codice+' '+s.descrizione+' '+s.problema+' '+s.tipo+' '+(s.lavori||[]).map(l=>l.t).join(' ')).toLowerCase().includes(q))return false;
+    return true}).sort((a,b)=>{
+      if(a.stato==='chiusa'&&b.stato==='chiusa')return (b.chiusaIl||'').localeCompare(a.chiusaIl||'');
+      if((a.stato==='chiusa')!==(b.stato==='chiusa'))return a.stato==='chiusa'?1:-1;
+      return b.gravita-a.gravita||b.creata.localeCompare(a.creata)});
+}
+function card(s){
+  const fatti=(s.lavori||[]).filter(l=>l.fatto).length,tot=(s.lavori||[]).length;
+  return `<button class="card g${s.gravita}" data-act="open" data-v="${esc(s.id)}"><span class="stripe"></span><span class="cbody">
+    <span class="crow"><span class="code">${esc(s.codice)}</span><span class="pill">${GRAV[s.gravita]}</span>${s.stato!=='aperta'?`<span class="pill st ${s.stato}">${STATI[s.stato]}</span>`:''}${s.esempio?'<span class="pill st">Esempio</span>':''}</span>
+    <span class="ctitle">${esc(s.descrizione||'Macchina senza descrizione')}${s.linea?` <span class="muted">· ${esc(s.linea)}</span>`:''}</span>
+    <span class="cprob">${esc(s.problema)}</span>
+    <span class="cmeta">${esc(s.tipo)} · ${esc(s.quando)}${tot?` · ${fatti}/${tot} lavori`:''}</span>
+    <span class="cmeta">${esc(s.autore)} · ${fmt(s.creata)}</span></span></button>`;
+}
+function listArea(){const l=filtered();return l.length?l.map(card).join(''):`<div class="empty">Nessuna segnalazione con questi filtri.</div>`}
+function vLista(){
+  const aperte=S.segn.filter(s=>s.stato!=='chiusa');
+  const crit=aperte.filter(s=>s.gravita>=4).length,alte=aperte.filter(s=>s.gravita===3).length;
+  const linee=[...new Set(S.segn.map(s=>s.linea).filter(Boolean))].sort();
+  const autori=[...new Set(S.segn.map(s=>s.autore).filter(Boolean))].sort();
+  const opt=(arr,sel,all)=>`<option value="">${all}</option>`+arr.map(v=>`<option ${v===sel?'selected':''} value="${esc(v)}">${esc(v)}</option>`).join('');
+  const chip=(k,l)=>`<button class="chip" data-act="fstato" data-v="${k}" aria-pressed="${filtri.stato===k}">${l}</button>`;
+  return `${!S.settings.nome?`<section class="panel"><h2>Prima di iniziare</h2><div class="field"><label class="lbl" for="introNome">Il tuo nome</label><input id="introNome" type="text" autocomplete="name" placeholder="Nome e cognome"><p class="hint">Comparirà su ogni segnalazione che crei.</p></div><button class="btn" data-act="saveNome">Salva</button></section>`:''}
+  ${S.segn.some(s=>s.esempio)?`<div class="banner"><span>Stai vedendo 3 segnalazioni di esempio.</span><button class="btn sec small" data-act="delEsempi">Cancella esempi</button></div>`:''}
+  <div class="tiles">
+    <button class="tile" data-act="fstato" data-v="aperte"><b>${aperte.length}</b><span>Da programmare</span></button>
+    <button class="tile t4" data-act="fgrav" data-v="4"><b>${crit}</b><span>Critiche${alte?` · ${alte} alte`:''}</span></button>
+    <button class="tile t2" data-act="fstato" data-v="attesa"><b>${aperte.filter(s=>s.stato==='attesa').length}</b><span>Attesa ricambio</span></button>
+  </div>
+  <div class="chips">${chip('aperte','Da fare')}${chip('attesa','Attesa ricambio')}${chip('chiuse','Chiuse')}${chip('tutte','Tutte')}</div>
+  <div class="filters">
+    <input class="q" id="fq" data-filt="q" type="search" placeholder="Cerca codice, macchina, testo" value="${esc(filtri.q)}">
+    <select id="fl" data-filt="linea" aria-label="Linea">${opt(linee,filtri.linea,'Tutte le linee')}</select>
+    <select id="fg" data-filt="grav" aria-label="Gravità"><option value="">Ogni gravità</option>${[4,3,2,1].map(k=>`<option value="${k}" ${String(k)===filtri.grav?'selected':''}>${GRAV[k]}</option>`).join('')}</select>
+    ${autori.length>1?`<select id="fa" data-filt="autore" aria-label="Manutentore">${opt(autori,filtri.autore,'Tutti i manutentori')}</select>`:''}
+  </div>
+  <div class="list" id="listArea">${listArea()}</div>`;
+}
+
+/* ---------- Dettaglio ---------- */
+function vDettaglio(){
+  const s=find(param);if(!s)return `<div class="empty">Segnalazione non trovata.</div>`;
+  const check='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const lav=(s.lavori||[]).map((l,i)=>`<div class="lavitem ${l.fatto?'done':''}"><button class="check" data-act="toggleLav" data-v="${i}" aria-label="${l.fatto?'Segna da fare':'Segna fatto'}" aria-pressed="${!!l.fatto}">${check}</button><div><div class="lt">${esc(l.t)}</div>${l.fatto&&l.da?`<div class="lby">Fatto da ${esc(l.da)} · ${fmt(l.il)}</div>`:''}</div></div>`).join('');
+  const fatti=(s.lavori||[]).filter(l=>l.fatto).length;
+  return `<button class="back" data-act="go" data-v="lista">‹ Interventi</button>
+  <div class="dhead g${s.gravita}"><div class="crow"><span class="code" style="font-size:18px">${esc(s.codice)}</span><span class="pill">${GRAV[s.gravita]}</span><span class="pill st ${s.stato}">${STATI[s.stato]}</span>${s.esempio?'<span class="pill st">Esempio</span>':''}</div>
+    <h1>${esc(s.descrizione||'Macchina senza descrizione')}</h1></div>
+  <section class="panel"><dl class="kv" style="margin:0">
+    <div><dt>Linea</dt><dd>${esc(s.linea||'—')}</dd></div><div><dt>Tipo</dt><dd>${esc(s.tipo)}</dd></div>
+    <div><dt>Quando intervenire</dt><dd>${esc(s.quando)}</dd></div><div><dt>Segnalata da</dt><dd>${esc(s.autore)}<br><span class="muted mono" style="font-size:14px">${fmt(s.creata)}</span></dd></div>
+  </dl>
+  ${(s.tipo==='Igienico-sanitario'||s.tipo==='Sicurezza')&&s.gravita>=3?`<div class="warn">Problema ${s.tipo==='Sicurezza'?'di sicurezza':'igienico-sanitario'} con gravità ${GRAV[s.gravita].toLowerCase()}: valuta se può davvero aspettare.</div>`:''}
+  <div><span class="lbl">Problema</span><p class="prose">${esc(s.problema)}</p></div>
+  ${s.ricambi?`<div><span class="lbl">Ricambi necessari</span><p class="prose">${esc(s.ricambi)}</p></div>`:''}</section>
+
+  <section class="panel"><h2>Lavori ${s.lavori&&s.lavori.length?`<span class="muted" style="font-size:17px">${fatti}/${s.lavori.length} fatti</span>`:''}</h2>
+    ${lav?`<div class="lav">${lav}</div>`:'<p class="muted" style="margin:0">Nessun lavoro in elenco.</p>'}
+    <div class="field"><label class="lbl" for="nuovoLav">Aggiungi lavoro</label><textarea id="nuovoLav" class="grow short" placeholder="Es. sostituire sensore di prossimità"></textarea></div>
+    <button class="btn sec" data-act="addLav">Aggiungi lavoro</button></section>
+
+  <section class="panel"><h2>Note</h2>
+    ${(s.note||[]).map(n=>`<div class="note"><p class="prose">${esc(n.t)}</p><div class="by">${esc(n.da)} · ${fmt(n.il)}</div></div>`).join('')||'<p class="muted" style="margin:0">Nessuna nota.</p>'}
+    <div class="field"><label class="lbl" for="nuovaNota">Nuova nota</label><textarea id="nuovaNota" class="grow" placeholder="Aggiornamenti, misure, cosa hai visto..."></textarea></div>
+    <button class="btn sec" data-act="addNota">Aggiungi nota</button></section>
+
+  ${s.stato==='chiusa'?`<section class="closed"><span class="lbl">Chiusa da ${esc(s.chiusaDa)} · ${fmt(s.chiusaIl)}</span><p class="prose">${esc(s.notaChiusura||'Nessuna nota di chiusura.')}</p></section>`:''}
+  <div class="row">
+    ${s.stato==='chiusa'?`<button class="btn sec" data-act="stato" data-v="aperta">Riapri</button>`:
+      `<button class="btn" data-act="chiudi">Lavoro completato</button>${s.stato==='attesa'?`<button class="btn sec" data-act="stato" data-v="aperta">Ricambio arrivato</button>`:`<button class="btn sec" data-act="stato" data-v="attesa">In attesa ricambio</button>`}`}
+  </div>
+  <div class="row"><button class="btn ghost" data-act="modifica">Modifica</button><button class="btn ghost" data-act="pdfUna">PDF</button><button class="btn ghost" data-act="elimina">Elimina</button></div>
+  <p class="hint">ID ${esc(s.id)} · aggiornata ${fmt(s.aggiornata)}</p>`;
+}
+function touch(s){s.aggiornata=nowIso();save()}
+
+/* ---------- Nuova / modifica ---------- */
+function newDraft(codice){const m=S.macchine[codice]||{};return{codice,descrizione:m.descrizione||'',linea:m.linea||'',tipo:'',gravita:0,quando:'',problema:'',lavori:[{t:'',fatto:false}],ricambi:'',autore:S.settings.nome||'',editId:null}}
+function setCode(c){c=String(c||'').trim();if(!c){toast('Scrivi il codice della macchina.');return}draft=newDraft(c);go('nuova')}
+function vNuova(){
+  if(!draft) return `<h1>Quale macchina?</h1>
+  <section class="panel">
+    <button class="btn" data-act="scan"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3"/><path d="M8 8h3v3H8zM13 13h3v3h-3z"/></svg>Scansiona il QR</button>
+    <label class="btn sec filebtn">Leggi da una foto del QR<input type="file" id="photoQR" accept="image/*" capture="environment"></label>
+    <div class="or">oppure</div>
+    <div class="field"><label class="lbl" for="codiceManuale">Codice macchina</label><input id="codiceManuale" class="mono" type="text" autocapitalize="characters" autocomplete="off" spellcheck="false" placeholder="Es. TRT-0412"></div>
+    <button class="btn ghost" data-act="codeok">Avanti</button>
+  </section>
+  ${Object.keys(S.macchine).length?`<section class="panel"><span class="lbl">Macchine già registrate</span><div class="chips">${Object.values(S.macchine).slice(0,30).map(m=>`<button class="chip" data-act="pickMach" data-v="${esc(m.codice)}"><span class="mono">${esc(m.codice)}</span>&nbsp;<span class="muted">${esc(m.descrizione)}</span></button>`).join('')}</div></section>`:''}`;
+  const d=draft;
+  const aperte=S.segn.filter(s=>s.codice===d.codice&&s.stato!=='chiusa'&&s.id!==d.editId);
+  const linee=[...new Set([...Object.values(S.macchine).map(m=>m.linea),...S.segn.map(s=>s.linea)].filter(Boolean))].sort();
+  const chips=(f,arr)=>arr.map(v=>`<button class="chip" data-act="pick" data-f="${f}" data-v="${esc(v)}" aria-pressed="${d[f]===v}">${esc(v)}</button>`).join('');
+  return `<h1>${d.editId?'Modifica segnalazione':'Nuova segnalazione'}</h1>
+  <div class="mach"><span class="code">${esc(d.codice)}</span>${d.editId?'':'<button class="btn ghost small" data-act="cambiaMach">Cambia</button>'}</div>
+  ${aperte.length?`<div class="banner"><span>Su questa macchina ${aperte.length===1?'c\'è già 1 segnalazione aperta':`ci sono già ${aperte.length} segnalazioni aperte`}. Controlla che non sia lo stesso problema.</span>${aperte.map(s=>`<button class="btn sec small" data-act="open" data-v="${esc(s.id)}">${esc(s.problema.slice(0,40))}${s.problema.length>40?'…':''}</button>`).join('')}</div>`:''}
+  <section class="panel">
+    <div class="field"><label class="lbl" for="dDesc">Macchina</label><input id="dDesc" data-f="descrizione" type="text" value="${esc(d.descrizione)}" placeholder="Es. Formatrice tortellini"></div>
+    <div class="field"><label class="lbl" for="dLinea">Linea produttiva</label><input id="dLinea" data-f="linea" type="text" list="lineeList" value="${esc(d.linea)}" placeholder="Es. Linea 2"><datalist id="lineeList">${linee.map(l=>`<option value="${esc(l)}">`).join('')}</datalist></div>
+    ${S.macchine[d.codice]?'<p class="hint" style="margin-top:-6px">Dati macchina compilati dall\'ultima volta.</p>':''}
+  </section>
+  <section class="panel">
+    <div class="field"><span class="lbl">Tipo di problema</span><div class="chips" data-group="tipo">${chips('tipo',TIPI)}</div></div>
+    <div class="field"><span class="lbl">Gravità</span><div class="grav" data-group="gravita">${[1,2,3,4].map(k=>`<button class="gbtn g${k}" data-act="pick" data-f="gravita" data-v="${k}" aria-pressed="${d.gravita===k}">${GRAV[k]}</button>`).join('')}</div></div>
+    <div class="warn" id="warn" hidden></div>
+    <div class="field"><span class="lbl">Quando intervenire</span><div class="chips" data-group="quando">${chips('quando',QUANDO)}</div></div>
+  </section>
+  <section class="panel">
+    <div class="field"><label class="lbl" for="dProb">Descrizione del problema</label><textarea id="dProb" class="grow" data-f="problema" placeholder="Cosa succede, da quando, in che condizioni...">${esc(d.problema)}</textarea><p class="hint">Scrivi quanto serve: il riquadro si allunga.</p></div>
+    <div class="field"><span class="lbl">Lavori da fare</span><div style="display:flex;flex-direction:column;gap:8px">
+      ${d.lavori.map((l,i)=>`<div class="lavedit"><textarea class="grow short" data-lav="${i}" aria-label="Lavoro ${i+1}" placeholder="Lavoro ${i+1}">${esc(l.t)}</textarea><button class="iconbtn" data-act="delLavD" data-v="${i}" aria-label="Togli lavoro ${i+1}">×</button></div>`).join('')}
+    </div></div>
+    <button class="btn sec" data-act="addLavD">+ Aggiungi lavoro</button>
+    <div class="field"><label class="lbl" for="dRic">Ricambi necessari</label><textarea id="dRic" class="grow short" data-f="ricambi" placeholder="Codice, quantità (facoltativo)">${esc(d.ricambi)}</textarea></div>
+  </section>
+  <section class="panel">
+    <div class="field"><label class="lbl" for="dAut">Manutentore</label><input id="dAut" data-f="autore" type="text" value="${esc(d.autore)}" placeholder="Nome e cognome" ${d.editId?'disabled':''}></div>
+    <p class="hint" style="margin-top:-6px">${d.editId?'Data e ora della segnalazione restano quelle originali.':'Data e ora vengono registrate in automatico al salvataggio.'}</p>
+  </section>
+  <p class="err" id="formErr" hidden></p>
+  <div class="row"><button class="btn" data-act="salva">Salva segnalazione</button>${d.editId?'<button class="btn ghost" data-act="annullaEdit">Annulla</button>':''}</div>`;
+}
+function updWarn(){const w=$('#warn');if(!w||!draft)return;const on=(draft.tipo==='Igienico-sanitario'||draft.tipo==='Sicurezza')&&draft.gravita>=3;w.hidden=!on;if(on)w.textContent=`Problema ${draft.tipo==='Sicurezza'?'di sicurezza':'igienico-sanitario'} con gravità ${GRAV[draft.gravita].toLowerCase()}: avvisa subito il responsabile, di solito non può aspettare il fermo.`}
+function salva(){
+  const d=draft,err=[];
+  if(!d.tipo)err.push('tipo di problema');if(!d.gravita)err.push('gravità');if(!d.quando)err.push('quando intervenire');
+  if(!d.problema.trim())err.push('descrizione del problema');if(!d.autore.trim())err.push('nome del manutentore');
+  if(err.length){const e=$('#formErr');e.hidden=false;e.textContent='Manca: '+err.join(', ')+'.';e.scrollIntoView({block:'center',behavior:'smooth'});return}
+  if(!S.settings.nome)S.settings.nome=d.autore.trim();
+  const now=nowIso(),lavori=d.lavori.map(l=>Object.assign({},l,{t:l.t.trim()})).filter(l=>l.t);
+  S.macchine[d.codice]={codice:d.codice,descrizione:d.descrizione.trim(),linea:d.linea.trim()};
+  let id=d.editId;
+  const campi={descrizione:d.descrizione.trim(),linea:d.linea.trim(),tipo:d.tipo,gravita:d.gravita,quando:d.quando,problema:d.problema.trim(),lavori,ricambi:d.ricambi.trim(),aggiornata:now};
+  if(id){Object.assign(find(id),campi)}
+  else{id=newId();S.segn.push(Object.assign({id,codice:d.codice,note:[],autore:d.autore.trim(),creata:now,stato:'aperta'},campi))}
+  save();draft=null;go('dettaglio',id);toast('Segnalazione salvata · '+fmt(now));
+}
+
+/* ---------- Invia / ricevi ---------- */
+function perReport(){
+  const p=scambio.periodo,list=S.segn;
+  if(p==='aperte')return list.filter(s=>s.stato!=='chiusa');
+  if(p==='tutte')return list.slice();
+  let cut=0;if(p==='oggi'){const d=new Date();d.setHours(0,0,0,0);cut=d.getTime()}
+  else if(p==='7')cut=Date.now()-7*864e5;else if(p==='ultimo')cut=S.settings.ultimoInvio?Date.parse(S.settings.ultimoInvio):0;
+  return list.filter(s=>Date.parse(s.aggiornata)>=cut);
+}
+function vScambio(){
+  const n=perReport().length;
+  return `<h1>Invia / Ricevi</h1>
+  ${inFrame?`<div class="warn">Sei nell'anteprima: qui la fotocamera, l'invio dei file e il salvataggio del PDF sono bloccati. Funzionano dall'app aperta nel browser del telefono.</div>`:''}
+  <section class="panel"><h2>Invia report</h2>
+    <div class="field"><label class="lbl" for="periodo">Cosa inviare</label><select id="periodo" data-sc="periodo">${Object.entries(PERIODI).map(([k,v])=>`<option value="${k}" ${k===scambio.periodo?'selected':''}>${v}</option>`).join('')}</select>
+    <p class="hint">${n} segnalazion${n===1?'e':'i'}${S.settings.ultimoInvio?` · ultimo invio ${fmt(S.settings.ultimoInvio)}`:''}</p></div>
+    <button class="btn" data-act="invia">Invia su WhatsApp</button>
+    <p class="hint" style="margin-top:-6px">Invia il riepilogo in testo, il file da importare e il PDF. ${isResp()?'Il tuo report contiene anche l\'elenco macchine, così i manutentori lo ricevono aggiornato.':''}</p>
+    <div class="row"><button class="btn sec" data-act="pdfReport">Solo PDF</button><button class="btn ghost" data-act="copia">Copia riepilogo</button></div>
+  </section>
+  <section class="panel"><h2>Ricevi report</h2>
+    <p class="muted" style="margin:0">Salva il file .json ricevuto su WhatsApp (su iPhone in "File"), poi aprilo da qui. Le segnalazioni nuove vengono aggiunte, quelle già presenti aggiornate se più recenti. Nessun doppione.</p>
+    <label class="btn sec filebtn">Apri file ricevuto<input type="file" id="importFile" accept=".json,application/json,text/plain"></label>
+  </section>
+  <section class="panel"><h2>Archivio</h2>
+    ${isResp()?'<button class="btn sec" data-act="csv">Esporta per Excel</button>':''}
+    <button class="btn ghost" data-act="backup">Backup completo</button>
+    <p class="hint" style="margin-top:-6px">I dati stanno solo su questo telefono. Fai un backup ogni settimana e tienilo al sicuro. Per ripristinarlo usa "Apri file ricevuto".</p>
+  </section>`;
+}
+function testo(list){
+  const r=isResp()?'Responsabile':'Manutentore';
+  const head=`*Report manutenzione*\n${S.settings.nome||'—'} (${r}) · ${fmt(nowIso())}\n${list.length} segnalazion${list.length===1?'e':'i'}`;
+  const sorted=list.slice().sort((a,b)=>(a.stato==='chiusa')-(b.stato==='chiusa')||b.gravita-a.gravita);
+  return head+'\n\n'+sorted.map(s=>{const p=s.problema.length>110?s.problema.slice(0,110)+'…':s.problema;
+    const lv=(s.lavori||[]).length?` · ${(s.lavori||[]).filter(l=>l.fatto).length}/${s.lavori.length} lavori`:'';
+    return `• [${GRAV[s.gravita].toUpperCase()}] ${s.codice} ${s.descrizione}${s.linea?' ('+s.linea+')':''}\n  ${p}\n  ${s.quando} · ${STATI[s.stato]}${lv}`}).join('\n\n');
+}
+function pacchetto(list){
+  const codici=new Set(list.map(s=>s.codice));
+  const macchine=isResp()?S.macchine:Object.fromEntries(Object.entries(S.macchine).filter(([k])=>codici.has(k)));
+  const p={app:'storico-guasti',versione:1,mittente:S.settings.nome,ruolo:S.settings.ruolo,creato:nowIso(),macchine,segnalazioni:list};
+  if(isResp()&&S.settings.logo)p.logo={data:S.settings.logo,w:S.settings.logoW,h:S.settings.logoH};
+  return p;
+}
+function baseName(){return `guasti-${initials(S.settings.nome)}-${stamp()}`}
+async function share(files,text){
+  try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,text,title:'Report manutenzione'});return true}}
+  catch(e){if(e&&e.name==='AbortError')return false}
+  files.forEach(f=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove()}catch(e){}});
+  toast(inFrame?"Nell'anteprima l'invio file è bloccato: prova dall'app aperta nel browser.":'File salvati: allegali su WhatsApp.');
+  return !inFrame;
+}
+async function invia(){
+  const list=perReport();if(!list.length){toast('Nessuna segnalazione nel periodo scelto.');return}
+  const name=baseName();
+  const files=[new File([JSON.stringify(pacchetto(list))],name+'.json',{type:'application/json'})];
+  const pdf=makePDF(list,'Report manutenzione');if(pdf)files.push(new File([pdf],name+'.pdf',{type:'application/pdf'}));
+  if(await share(files,testo(list))){S.settings.ultimoInvio=nowIso();save();render()}
+}
+function importa(obj){
+  if(!obj||obj.app!=='storico-guasti')throw new Error('Questo file non è un report di Manutenzioni da programmare.');
+  let nuove=0,agg=0,mac=0;const daResp=obj.ruolo==='responsabile'||obj.tipo==='backup';
+  if(daResp&&obj.logo&&typeof obj.logo.data==='string'&&obj.logo.data.startsWith('data:image/')){S.settings.logo=obj.logo.data;S.settings.logoW=obj.logo.w;S.settings.logoH=obj.logo.h}
+  Object.entries(obj.macchine||{}).forEach(([k,v])=>{if((!S.macchine[k]||daResp)&&JSON.stringify(S.macchine[k])!==JSON.stringify(v)){S.macchine[k]=v;mac++}});
+  (obj.segnalazioni||[]).forEach(s=>{if(!s||!s.id)return;const i=S.segn.findIndex(x=>x.id===s.id);
+    if(i<0){S.segn.push(s);nuove++}else if((s.aggiornata||'')>(S.segn[i].aggiornata||'')){S.segn[i]=s;agg++}});
+  save();return{nuove,agg,mac,da:obj.mittente};
+}
+function csv(){
+  const cols=['ID','Codice','Macchina','Linea','Tipo','Gravità','Quando','Stato','Problema','Lavori','Ricambi','Manutentore','Creata','Aggiornata','Chiusa da','Chiusa il','Nota chiusura'];
+  const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+  const rows=S.segn.map(s=>[s.id,s.codice,s.descrizione,s.linea,s.tipo,GRAV[s.gravita],s.quando,STATI[s.stato],s.problema,(s.lavori||[]).map(l=>(l.fatto?'[x] ':'[ ] ')+l.t).join('\n'),s.ricambi,s.autore,fmt(s.creata),fmt(s.aggiornata),s.chiusaDa,fmt(s.chiusaIl),s.notaChiusura].map(q).join(';'));
+  return '﻿'+cols.map(q).join(';')+'\r\n'+rows.join('\r\n');
+}
+
+/* ---------- PDF ---------- */
+function clean(t){return String(t==null?'':t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/…/g,'...').replace(/[^\x00-\xFF\n]/g,'')}
+function makePDF(list,titolo){
+  if(!window.jspdf){toast('Libreria PDF non caricata: serve la connessione la prima volta.');return null}
+  const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
+  const PW=210,L=15,R=195,W=180,TOP=18,B=277;
+  const C={head:[19,33,47],accent:[31,111,178],ink:[20,34,49],grey:[96,108,122],line:[214,221,228],soft:[243,246,249],ok:[45,134,80],okSoft:[226,242,232]};
+  const G={1:[45,134,80],2:[176,128,8],3:[204,90,22],4:[192,45,40]};
+  const GS={1:[230,244,235],2:[251,243,217],3:[252,234,222],4:[250,226,225]};
+  const gen=fmt(nowIso()),autore=S.settings.nome||'-',ruolo=isResp()?'Responsabile':'Manutentore';
+  let y=0,onBreak=null;
+  const font=(size,style,color,fam)=>{doc.setFont(fam||'helvetica',style||'normal');doc.setFontSize(size);doc.setTextColor(...(color||C.ink))};
+  const fit=(t,w)=>{t=clean(t);if(doc.getTextWidth(t)<=w)return t;while(t.length>1&&doc.getTextWidth(t+'...')>w)t=t.slice(0,-1);return t+'...'};
+  const need=h=>{if(y+h>B){if(onBreak)onBreak('end');doc.addPage();y=TOP;if(onBreak)onBreak('start')}};
+  const para=(t,o={})=>{const size=o.size||10,lh=o.lh||size*0.45,x=o.x||L;font(size,o.style,o.color);
+    doc.splitTextToSize(clean(t),o.w||W).forEach(ln=>{need(lh);doc.text(ln,x,y+lh*0.78);y+=lh});y+=(o.gap==null?1.5:o.gap)};
+  const sorted=list.slice().sort((a,b)=>(a.stato==='chiusa')-(b.stato==='chiusa')||b.gravita-a.gravita||a.codice.localeCompare(b.codice));
+
+  /* Testata prima pagina */
+  doc.setFillColor(...C.head);doc.rect(0,0,PW,40,'F');doc.setFillColor(...C.accent);doc.rect(0,40,PW,1.4,'F');
+  let tx=L;
+  if(S.settings.logo&&S.settings.logoW){try{const bw=46,bh=24,r=Math.min((bw-6)/S.settings.logoW,(bh-6)/S.settings.logoH),iw=S.settings.logoW*r,ih=S.settings.logoH*r;
+    doc.setFillColor(255,255,255);doc.roundedRect(L,8,bw,bh,2.5,2.5,'F');doc.addImage(S.settings.logo,'PNG',L+(bw-iw)/2,8+(bh-ih)/2,iw,ih);tx=L+bw+8}catch(e){}}
+  font(7.5,'bold',[143,176,210]);doc.text('MANUTENZIONI DA PROGRAMMARE',tx,15);
+  font(19,'bold',[255,255,255]);doc.text(fit(titolo,R-tx-42),tx,24);
+  font(9,'normal',[200,212,224]);doc.text(fit(`${autore}  ·  ${ruolo}`,R-tx-42),tx,31);
+  font(7.5,'normal',[160,180,200]);doc.text('GENERATO IL',R,19,{align:'right'});font(11,'bold',[255,255,255]);doc.text(gen,R,25.5,{align:'right'});
+  y=50;
+
+  if(list.length>1){
+    /* Indicatori */
+    const ap=list.filter(s=>s.stato!=='chiusa');
+    const kpi=[['Totale',list.length,C.ink],['Da programmare',ap.length,C.accent],['Critiche',ap.filter(s=>s.gravita===4).length,G[4]],['Attesa ricambio',list.filter(s=>s.stato==='attesa').length,G[2]],['Chiuse',list.filter(s=>s.stato==='chiusa').length,C.ok]];
+    const kw=(W-4*3)/5;
+    kpi.forEach(([l,n,c],i)=>{const x=L+i*(kw+3);doc.setFillColor(...C.soft);doc.roundedRect(x,y,kw,19,2,2,'F');doc.setFillColor(...c);doc.rect(x,y+3,1.2,13,'F');
+      font(17,'bold',c);doc.text(String(n),x+5,y+10.5);font(6.8,'bold',C.grey);doc.text(l.toUpperCase(),x+5,y+15.6)});
+    y+=28;
+    /* Tabella riepilogo */
+    font(12,'bold');doc.text('Riepilogo',L,y+4);y+=8;
+    const cols=[['Codice',25],['Macchina',44],['Linea',20],['Gravità',20],['Quando',37],['Stato',34]];
+    const th=()=>{doc.setFillColor(...C.head);doc.rect(L,y,W,7.5,'F');font(7,'bold',[255,255,255]);let x=L+2.5;cols.forEach(([t,w])=>{doc.text(t.toUpperCase(),x,y+5);x+=w});y+=7.5};
+    th();
+    sorted.forEach((s,i)=>{if(y+7.5>B){doc.addPage();y=TOP;th()}
+      if(i%2){doc.setFillColor(...C.soft);doc.rect(L,y,W,7.5,'F')}
+      let x=L+2.5;const cells=[s.codice,s.descrizione||'-',s.linea||'-',GRAV[s.gravita],s.quando,STATI[s.stato]];
+      cells.forEach((v,j)=>{const w=cols[j][1];
+        if(j===3){doc.setFillColor(...G[s.gravita]);doc.circle(x+1.3,y+3.7,1.3,'F');font(8.5,'bold',G[s.gravita]);doc.text(fit(v,w-6),x+4.2,y+5)}
+        else{font(j===0?8.5:8.5,j===0?'bold':'normal',j===5&&s.stato==='chiusa'?C.ok:C.ink,j===0?'courier':'helvetica');doc.text(fit(v,w-3),x,y+5)}
+        x+=w});
+      y+=7.5});
+    doc.setDrawColor(...C.line);doc.setLineWidth(0.3);doc.line(L,y,R,y);y+=11;
+    need(54);font(12,'bold');doc.text('Dettaglio interventi',L,y+4);y+=9;
+  }
+
+  /* Schede */
+  sorted.forEach(s=>{
+    const gc=G[s.gravita],gs=GS[s.gravita];
+    need(40);let top=y;
+    onBreak=ph=>{if(ph==='end'){doc.setFillColor(...gc);doc.rect(L,top,1.6,y-top,'F')}else top=y};
+    doc.setFillColor(...gs);doc.rect(L,y,W,17,'F');
+    font(11,'bold',gc,'courier');const code=fit(s.codice,42);doc.text(code,L+6,y+7);const cw=doc.getTextWidth(code);
+    font(7.5,'bold',[255,255,255]);const pt=GRAV[s.gravita].toUpperCase(),pw=doc.getTextWidth(pt)+8;
+    font(12,'bold');doc.text(fit(s.descrizione||'Macchina',W-cw-pw-18),L+6+cw+4,y+7);
+    doc.setFillColor(...gc);doc.roundedRect(R-3-pw,y+3,pw,5.8,2.9,2.9,'F');font(7.5,'bold',[255,255,255]);doc.text(pt,R-3-pw/2,y+6.9,{align:'center'});
+    font(8.5,'normal',C.grey);doc.text(fit(`${s.linea||'-'}   ·   ${s.tipo}   ·   ${s.quando}   ·   ${STATI[s.stato]}`,W-10),L+6,y+13.3);
+    y+=21;
+    para(`Segnalato da ${s.autore} il ${fmt(s.creata)}   ·   ultimo aggiornamento ${fmt(s.aggiornata)}   ·   ID ${s.id}`,{size:7.3,color:C.grey,x:L+6,w:W-9,gap:3});
+    const label=t=>{need(10);font(7.3,'bold',C.accent);doc.text(t,L+6,y+3);y+=5.2};
+    label('PROBLEMA');para(s.problema,{x:L+6,w:W-9,gap:3.5});
+    if((s.lavori||[]).length){
+      label(`LAVORI   ${s.lavori.filter(l=>l.fatto).length} / ${s.lavori.length} FATTI`);
+      s.lavori.forEach(l=>{font(10);const lines=doc.splitTextToSize(clean(l.t),W-17),lh=4.5;need(lh*lines.length+(l.fatto&&l.da?4:0)+1);
+        if(l.fatto){doc.setFillColor(...C.ok);doc.roundedRect(L+6,y+0.7,3.6,3.6,0.7,0.7,'F');doc.setDrawColor(255,255,255);doc.setLineWidth(0.55);
+          doc.line(L+6.8,y+2.6,L+7.6,y+3.4);doc.line(L+7.6,y+3.4,L+8.9,y+1.6)}
+        else{doc.setDrawColor(...C.grey);doc.setLineWidth(0.3);doc.roundedRect(L+6,y+0.7,3.6,3.6,0.7,0.7,'S')}
+        font(10,'normal',l.fatto?C.grey:C.ink);lines.forEach(ln=>{doc.text(ln,L+12.5,y+3.6);y+=lh});
+        if(l.fatto&&l.da){font(7.3,'normal',C.grey);doc.text(clean(`fatto da ${l.da}  ·  ${fmt(l.il)}`),L+12.5,y+2.6);y+=4}
+        y+=1.2});
+      y+=2.3}
+    if(s.ricambi){label('RICAMBI NECESSARI');para(s.ricambi,{x:L+6,w:W-9,gap:3.5})}
+    if((s.note||[]).length){label('NOTE');s.note.forEach(n=>{para(`${fmt(n.il)}  ·  ${n.da}`,{size:7.3,style:'bold',color:C.grey,x:L+6,w:W-9,gap:0.4});para(n.t,{size:9.5,x:L+6,w:W-9,gap:2.4})});y+=1}
+    if(s.stato==='chiusa'){
+      font(9.5);const lines=s.notaChiusura?doc.splitTextToSize(clean(s.notaChiusura),W-17):[];const h=10+lines.length*4.3;need(h+2);
+      doc.setFillColor(...C.okSoft);doc.roundedRect(L+6,y,W-6,h,2,2,'F');
+      font(7.3,'bold',C.ok);doc.text(clean(`COMPLETATO DA ${(s.chiusaDa||'-').toUpperCase()}  ·  ${fmt(s.chiusaIl)}`),L+10,y+5.5);
+      font(9.5,'normal',C.ink);let yy=y+10;lines.forEach(ln=>{doc.text(ln,L+10,yy);yy+=4.3});y+=h+3}
+    doc.setFillColor(...gc);doc.rect(L,top,1.6,y-top,'F');onBreak=null;
+    y+=8;
+  });
+
+  /* Testatine e piè di pagina */
+  const n=doc.getNumberOfPages();
+  for(let i=1;i<=n;i++){doc.setPage(i);
+    if(i>1){doc.setFillColor(...C.head);doc.rect(0,0,PW,10,'F');doc.setFillColor(...C.accent);doc.rect(0,10,PW,0.8,'F');
+      font(7.5,'bold',[255,255,255]);doc.text(fit(titolo,120),L,6.5);font(7.5,'normal',[180,196,212]);doc.text(gen,R,6.5,{align:'right'})}
+    doc.setDrawColor(...C.line);doc.setLineWidth(0.3);doc.line(L,284,R,284);
+    font(7.3,'normal',C.grey);doc.text(clean(`Manutenzioni da programmare  ·  ${autore}`),L,289);doc.text(`Pagina ${i} di ${n}`,R,289,{align:'right'})}
+  return doc.output('blob');
+}
+
+/* ---------- Profilo ---------- */
+function vImpostazioni(){
+  return `<h1>Profilo</h1>
+  <section class="panel"><div class="field"><label class="lbl" for="setNome">Il tuo nome</label><input id="setNome" type="text" autocomplete="name" value="${esc(S.settings.nome)}" placeholder="Nome e cognome"><p class="hint">Viene messo su ogni segnalazione e sui report che invii.</p></div></section>
+  <section class="panel"><span class="lbl">Ruolo</span>
+    <div class="chips"><button class="chip" data-act="ruolo" data-v="manutentore" aria-pressed="${!isResp()}">Manutentore</button><button class="chip" data-act="ruolo" data-v="responsabile" aria-pressed="${isResp()}">Responsabile</button></div>
+    <p class="hint" style="margin:0">${isResp()?'Raccogli i report dei manutentori, gestisci l\'elenco macchine ed esporti per Excel.':'Segnali i problemi e invii i report al responsabile.'} Tutti e due possono segnare i lavori come fatti.</p>
+    ${isResp()?'<button class="btn ghost" data-act="cambiaPin">Cambia PIN</button>':''}
+  </section>
+  <section class="panel"><span class="lbl">Logo aziendale</span>
+    ${S.settings.logo?`<div class="mach" style="justify-content:center;background:#fff"><img src="${S.settings.logo}" alt="Logo caricato" style="max-height:64px;max-width:220px"></div>`:'<p class="muted" style="margin:0">Carica il file del logo dell\'azienda (PNG o JPG). Compare nella testata dell\'app e nei PDF.</p>'}
+    <div class="row"><label class="btn sec filebtn">${S.settings.logo?'Cambia logo':'Carica logo'}<input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp"></label>${S.settings.logo?'<button class="btn ghost" data-act="delLogo">Rimuovi</button>':''}</div>
+    ${isResp()?'<p class="hint" style="margin:0">Il logo viaggia con i tuoi report: i manutentori lo ricevono quando importano il file.</p>':''}
+  </section>
+  ${S.segn.some(s=>s.esempio)?'<section class="panel"><span class="lbl">Esempi</span><button class="btn ghost" data-act="delEsempi">Cancella le segnalazioni di esempio</button></section>':''}
+  <section class="panel"><h2>Installa sul telefono</h2>
+    <p style="margin:0"><b>Android:</b> apri l'app in Chrome, menu ⋮ e poi "Aggiungi a schermata Home" o "Installa app".</p>
+    <p style="margin:0"><b>iPhone:</b> apri l'app in Safari, tasto Condividi e poi "Aggiungi alla schermata Home". Su iPhone è importante: dall'icona i dati non vengono cancellati.</p>
+  </section>
+  <p class="hint">Versione prototipo v1 · ${S.segn.length} segnalazioni · ${Object.keys(S.macchine).length} macchine</p>`;
+}
+async function hash(p){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('sg:'+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=7;for(const c of 'sg:'+p)h=(h*31+c.charCodeAt(0))|0;return 'x'+h}}
+const pinOk=p=>/^\d{4,6}$/.test(p);
+function chiediNuovoPin(titolo,dopo){
+  modal({title:titolo,ok:'Salva PIN',html:`<p class="muted" style="margin:0">Da 4 a 6 cifre. Servirà per entrare come responsabile.</p>
+    <div class="field"><label class="lbl" for="p1">Nuovo PIN</label><input id="p1" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6"></div>
+    <div class="field"><label class="lbl" for="p2">Ripeti PIN</label><input id="p2" type="password" inputmode="numeric" autocomplete="new-password" maxlength="6"></div>`,
+    onOk:async m=>{const a=m.querySelector('#p1').value,b=m.querySelector('#p2').value;
+      if(!pinOk(a))return merr('Il PIN deve avere da 4 a 6 cifre.');if(a!==b)return merr('I due PIN non coincidono.');
+      S.settings.pin=await hash(a);save();dopo&&dopo();toast('PIN salvato');}});
+}
+
+/* ---------- Modale, toast ---------- */
+function merr(t){const e=$('#merr');if(e){e.hidden=false;e.textContent=t}return false}
+function modal({title,html,ok='Conferma',danger=false,onOk}){
+  const w=$('#modal');
+  w.innerHTML=`<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mt"><h2 id="mt">${esc(title)}</h2>${html}<p class="err" id="merr" hidden></p>
+    <div class="row"><button class="btn ghost" data-m="no">Annulla</button><button class="btn ${danger?'danger':''}" data-m="ok">${esc(ok)}</button></div></div>`;
+  w.hidden=false;w.querySelectorAll('textarea.grow').forEach(grow);
+  const f=w.querySelector('input,textarea');if(f)setTimeout(()=>f.focus(),60);
+  w.onclick=async e=>{const b=e.target.closest('[data-m]');
+    if(e.target===w||(b&&b.dataset.m==='no')){w.hidden=true;return}
+    if(b&&b.dataset.m==='ok'){b.disabled=true;const r=await onOk(w);b.disabled=false;if(r!==false)w.hidden=true}};
+}
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,3800)}
+
+/* ---------- QR ---------- */
+let scanStream=null,scanRun=false;
+async function scan(){
+  if(!(navigator.mediaDevices&&navigator.mediaDevices.getUserMedia)){toast('Fotocamera non disponibile qui: usa la foto del QR o scrivi il codice.');return}
+  try{scanStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'}},audio:false})}
+  catch(e){toast('Fotocamera non disponibile: usa la foto del QR o scrivi il codice.');return}
+  $('#scanner').hidden=false;const v=$('#scanVideo');v.srcObject=scanStream;try{await v.play()}catch(e){}
+  scanRun=true;let det=null;if('BarcodeDetector' in window){try{det=new BarcodeDetector({formats:['qr_code']})}catch(e){}}
+  const c=document.createElement('canvas'),ctx=c.getContext('2d',{willReadFrequently:true});
+  const tick=async()=>{if(!scanRun)return;let val=null;
+    try{if(v.readyState>=2){
+      if(det){const r=await det.detect(v);if(r.length)val=r[0].rawValue}
+      else if(window.jsQR){const W=v.videoWidth,H=v.videoHeight,k=Math.min(1,720/Math.max(W,H));c.width=W*k|0;c.height=H*k|0;ctx.drawImage(v,0,0,c.width,c.height);
+        const r=jsQR(ctx.getImageData(0,0,c.width,c.height).data,c.width,c.height,{inversionAttempts:'dontInvert'});if(r)val=r.data}}}catch(e){}
+    if(val){stopScan();try{navigator.vibrate&&navigator.vibrate(80)}catch(e){}setCode(val);return}
+    setTimeout(tick,140)};
+  tick();
+}
+function stopScan(){scanRun=false;if(scanStream){scanStream.getTracks().forEach(t=>t.stop());scanStream=null}$('#scanner').hidden=true}
+async function decodePhoto(file){
+  const url=URL.createObjectURL(file),img=new Image();img.src=url;
+  try{await img.decode()}catch(e){toast('Non riesco ad aprire la foto.');return}
+  let val=null;
+  if('BarcodeDetector' in window){try{const r=await new BarcodeDetector({formats:['qr_code']}).detect(img);if(r.length)val=r[0].rawValue}catch(e){}}
+  if(!val&&window.jsQR){const c=document.createElement('canvas'),ctx=c.getContext('2d',{willReadFrequently:true});
+    for(const max of [1000,1600,600]){const k=Math.min(1,max/Math.max(img.naturalWidth,img.naturalHeight));c.width=img.naturalWidth*k|0;c.height=img.naturalHeight*k|0;
+      ctx.drawImage(img,0,0,c.width,c.height);const r=jsQR(ctx.getImageData(0,0,c.width,c.height).data,c.width,c.height);if(r){val=r.data;break}}}
+  URL.revokeObjectURL(url);
+  if(val)setCode(val);else toast('Nessun QR trovato nella foto. Avvicinati o scrivi il codice a mano.');
+}
+
+/* ---------- Azioni ---------- */
+const A={
+  go:b=>{if(b.dataset.v==='nuova'&&draft&&draft.editId)draft=null;go(b.dataset.v)},
+  open:b=>go('dettaglio',b.dataset.v),
+  fstato:b=>{filtri.stato=b.dataset.v;if(b.classList.contains('tile'))filtri.grav='';render()},
+  fgrav:b=>{filtri.stato='aperte';filtri.grav=b.dataset.v;render()},
+  delLogo:()=>{delete S.settings.logo;delete S.settings.logoW;delete S.settings.logoH;save();render();toast('Logo rimosso')},
+  saveNome:()=>{const v=$('#introNome').value.trim();if(!v){toast('Scrivi il tuo nome.');return}S.settings.nome=v;save();render()},
+  delEsempi:()=>modal({title:'Cancellare gli esempi?',html:'<p style="margin:0">Le 3 segnalazioni di esempio e le relative macchine verranno tolte. Le tue segnalazioni restano.</p>',ok:'Cancella',danger:true,
+    onOk:()=>{S.segn=S.segn.filter(s=>!s.esempio);['TRT-0412','CNF-0233','GN-0107'].forEach(k=>{if(!S.segn.some(s=>s.codice===k))delete S.macchine[k]});save();render();toast('Esempi cancellati')}}),
+  scan:()=>scan(),stopScan:()=>stopScan(),
+  codeok:()=>setCode($('#codiceManuale').value),
+  pickMach:b=>setCode(b.dataset.v),
+  cambiaMach:()=>{draft=null;render()},
+  pick:b=>{const f=b.dataset.f;draft[f]=f==='gravita'?+b.dataset.v:b.dataset.v;
+    b.parentElement.querySelectorAll('[data-act="pick"]').forEach(x=>x.setAttribute('aria-pressed',x===b?'true':'false'));updWarn()},
+  addLavD:()=>{draft.lavori.push({t:'',fatto:false});const y=window.scrollY;render();window.scrollTo(0,y);const all=document.querySelectorAll('[data-lav]');all[all.length-1].focus()},
+  delLavD:b=>{draft.lavori.splice(+b.dataset.v,1);if(!draft.lavori.length)draft.lavori.push({t:'',fatto:false});const y=window.scrollY;render();window.scrollTo(0,y)},
+  salva:()=>salva(),
+  annullaEdit:()=>{const id=draft.editId;draft=null;go('dettaglio',id)},
+  toggleLav:b=>{const s=find(param),l=s.lavori[+b.dataset.v];l.fatto=!l.fatto;if(l.fatto){l.da=S.settings.nome||'—';l.il=nowIso()}else{delete l.da;delete l.il}touch(s);const y=window.scrollY;render();window.scrollTo(0,y)},
+  addLav:()=>{const t=$('#nuovoLav').value.trim();if(!t){toast('Scrivi il lavoro da aggiungere.');return}const s=find(param);(s.lavori=s.lavori||[]).push({t,fatto:false});touch(s);const y=window.scrollY;render();window.scrollTo(0,y);toast('Lavoro aggiunto')},
+  addNota:()=>{const t=$('#nuovaNota').value.trim();if(!t){toast('Scrivi la nota.');return}const s=find(param);(s.note=s.note||[]).push({t,da:S.settings.nome||'—',il:nowIso()});touch(s);const y=window.scrollY;render();window.scrollTo(0,y);toast('Nota aggiunta')},
+  stato:b=>{const s=find(param);s.stato=b.dataset.v;if(b.dataset.v!=='chiusa'){delete s.chiusaDa;delete s.chiusaIl;delete s.notaChiusura}touch(s);render();toast('Stato: '+STATI[s.stato])},
+  chiudi:()=>{const s=find(param),aperti=(s.lavori||[]).filter(l=>!l.fatto).length;
+    modal({title:'Chiudi la segnalazione',ok:'Chiudi',html:`${aperti?`<div class="warn">${aperti} lavor${aperti===1?'o non è segnato':'i non sono segnati'} come fatt${aperti===1?'o':'i'}. Chiudendo restano nello storico così come sono.</div>`:''}
+      <div class="field"><label class="lbl" for="nc">Cosa è stato fatto</label><textarea id="nc" class="grow" placeholder="Intervento eseguito, ricambi usati, prove fatte..."></textarea></div>`,
+      onOk:m=>{s.stato='chiusa';s.chiusaDa=S.settings.nome||'—';s.chiusaIl=nowIso();s.notaChiusura=m.querySelector('#nc').value.trim();touch(s);render();toast('Segnalazione chiusa')}})},
+  modifica:()=>{const s=find(param);draft={codice:s.codice,descrizione:s.descrizione,linea:s.linea,tipo:s.tipo,gravita:s.gravita,quando:s.quando,problema:s.problema,
+    lavori:(s.lavori||[]).map(l=>Object.assign({},l)),ricambi:s.ricambi||'',autore:s.autore,editId:s.id};if(!draft.lavori.length)draft.lavori.push({t:'',fatto:false});go('nuova')},
+  elimina:()=>modal({title:'Eliminare la segnalazione?',html:'<p style="margin:0">Sparisce solo da questo telefono. Se l\'hai già inviata, resta nell\'app di chi l\'ha ricevuta. Se vuoi tenerla nello storico, usa invece "Lavoro completato".</p>',ok:'Elimina',danger:true,
+    onOk:()=>{S.segn=S.segn.filter(s=>s.id!==param);save();go('lista');toast('Segnalazione eliminata')}}),
+  pdfUna:async()=>{const s=find(param),p=makePDF([s],'Segnalazione '+s.codice);if(p)await share([new File([p],`guasto-${s.codice.replace(/[^\w-]/g,'_')}-${stamp()}.pdf`,{type:'application/pdf'})],'')},
+  invia:()=>invia(),
+  pdfReport:async()=>{const l=perReport();if(!l.length){toast('Nessuna segnalazione nel periodo scelto.');return}const p=makePDF(l,'Report manutenzione');if(p)await share([new File([p],baseName()+'.pdf',{type:'application/pdf'})],'')},
+  copia:async()=>{const l=perReport();if(!l.length){toast('Nessuna segnalazione nel periodo scelto.');return}
+    try{await navigator.clipboard.writeText(testo(l));toast('Riepilogo copiato: incollalo su WhatsApp.')}catch(e){toast('Copia non riuscita su questo dispositivo.')}},
+  csv:async()=>{await share([new File([csv()],`guasti-excel-${stamp()}.csv`,{type:'text/csv'})],'')},
+  backup:async()=>{const b=Object.assign(pacchetto(S.segn),{tipo:'backup',macchine:S.macchine});await share([new File([JSON.stringify(b)],`backup-guasti-${initials(S.settings.nome)}-${stamp()}.json`,{type:'application/json'})],'')},
+  ruolo:async b=>{const v=b.dataset.v;if(v===S.settings.ruolo)return;
+    if(v==='manutentore'){S.settings.ruolo='manutentore';save();render();return}
+    if(!S.settings.pin){chiediNuovoPin('Crea il PIN del responsabile',()=>{S.settings.ruolo='responsabile';save();render()});return}
+    modal({title:'PIN responsabile',ok:'Entra',html:'<div class="field"><label class="lbl" for="pe">PIN</label><input id="pe" type="password" inputmode="numeric" autocomplete="off" maxlength="6"></div>',
+      onOk:async m=>{if(await hash(m.querySelector('#pe').value)!==S.settings.pin)return merr('PIN errato.');S.settings.ruolo='responsabile';save();render()}})},
+  cambiaPin:()=>chiediNuovoPin('Nuovo PIN responsabile'),
+};
+document.addEventListener('click',e=>{const b=e.target.closest('[data-act]');if(!b||b.disabled)return;const f=A[b.dataset.act];if(f){e.preventDefault();f(b,e)}});
+document.addEventListener('input',e=>{const t=e.target;
+  if(t.matches('textarea.grow'))grow(t);
+  if(draft&&t.dataset.f)draft[t.dataset.f]=t.value;
+  if(draft&&t.dataset.lav!=null)draft.lavori[+t.dataset.lav].t=t.value;
+  if(t.dataset.filt!=null){filtri[t.dataset.filt]=t.value;const la=$('#listArea');if(la)la.innerHTML=listArea()}
+  if(t.dataset.sc){scambio[t.dataset.sc]=t.value;render()}
+  if(t.id==='setNome'){S.settings.nome=t.value;save()}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='codiceManuale'){e.preventDefault();setCode(e.target.value)}
+  if(e.key==='Escape'){if(!$('#scanner').hidden)stopScan();$('#modal').hidden=true}});
+document.addEventListener('change',async e=>{const t=e.target;
+  if(t.id==='photoQR'&&t.files[0]){await decodePhoto(t.files[0]);t.value=''}
+  if(t.id==='logoFile'&&t.files[0]){const url=URL.createObjectURL(t.files[0]),img=new Image();img.src=url;
+    try{await img.decode()}catch(err){toast('Immagine non valida: usa un PNG o JPG.');return}
+    const k=Math.min(1,480/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
+    c.width=Math.max(1,Math.round(img.naturalWidth*k));c.height=Math.max(1,Math.round(img.naturalHeight*k));c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+    S.settings.logo=c.toDataURL('image/png');S.settings.logoW=c.width;S.settings.logoH=c.height;URL.revokeObjectURL(url);save();render();toast('Logo salvato');t.value=''}
+  if(t.id==='importFile'&&t.files[0]){try{const r=importa(JSON.parse(await t.files[0].text()));render();
+      toast(`Importato${r.da?' da '+r.da:''}: ${r.nuove} nuove, ${r.agg} aggiornate${r.mac?', '+r.mac+' macchine':''}.`)}
+    catch(err){toast(err.message&&err.message.includes('Manutenzioni')?err.message:'File non valido: scegli il .json ricevuto dal report.')}t.value=''}
+});
+let lastY=0;
+window.addEventListener('scroll',()=>{const y=window.scrollY,d=y-lastY;if(Math.abs(d)<8)return;
+  document.body.classList.toggle('hide-bars',d>0&&y>80);lastY=y},{passive:true});
+render();
+})();
+</script>
+</body>
+</html>

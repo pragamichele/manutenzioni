@@ -279,6 +279,7 @@ async function avvio(){
   if(dati)S=Object.assign(blank(),dati);
   else{const ls=load();if(ls){S=ls;if(idbOk)save()}else{seed(S);save()}}
   render();
+  if(location.search.includes('import-condiviso')){try{const c=await caches.open('condivisi');const r=await c.match('./file-condiviso');if(r){const x=importa(JSON.parse(await r.text()));await c.delete('./file-condiviso');render();toast(`Importato${x.da?' da '+x.da:''}: ${x.nuove} nuove, ${x.agg} aggiornate.`)}}catch(e){toast('File ricevuto non valido: usa il file -dati.txt o il backup.')}history.replaceState(null,'',location.pathname)}
 }
 const isResp=()=>S.settings.ruolo==='responsabile';
 const find=id=>S.segn.find(s=>s.id===id);
@@ -488,11 +489,11 @@ function vScambio(){
     <div class="field"><label class="lbl" for="periodo">Cosa inviare</label><select id="periodo" data-sc="periodo">${Object.entries(PERIODI).map(([k,v])=>`<option value="${k}" ${k===scambio.periodo?'selected':''}>${v}</option>`).join('')}</select>
     <p class="hint">${n} segnalazion${n===1?'e':'i'}${S.settings.ultimoInvio?` · ultimo invio ${fmt(S.settings.ultimoInvio)}`:''}</p></div>
     <button class="btn" data-act="invia">Invia su WhatsApp</button>
-    <p class="hint" style="margin-top:-6px">Invia il riepilogo in testo, il file da importare e il PDF. ${isResp()?'Il tuo report contiene anche l\'elenco macchine, così i manutentori lo ricevono aggiornato.':''}</p>
+    <p class="hint" style="margin-top:-6px">Invia il file da importare e il PDF come documenti. Per il testo in chat usa "Copia riepilogo". ${isResp()?'Il tuo report contiene anche l\'elenco macchine, così i manutentori lo ricevono aggiornato.':''}</p>
     <div class="row"><button class="btn sec" data-act="pdfReport">Solo PDF</button><button class="btn ghost" data-act="copia">Copia riepilogo</button></div>
   </section>
   <section class="panel"><h2>Ricevi report</h2>
-    <p class="muted" style="margin:0">Salva il file dati ricevuto su WhatsApp (quello che finisce con <b>-dati.txt</b> o il backup .txt; su iPhone in "File"), poi aprilo da qui. Le segnalazioni nuove vengono aggiunte, quelle già presenti aggiornate se più recenti. Nessun doppione.</p>
+    <p class="muted" style="margin:0"><b>Android:</b> in WhatsApp tieni premuto il file che finisce con <b>-dati.txt</b> (o il backup) → Condividi → <b>Manutenzioni</b>: si importa da solo. <b>iPhone o PC:</b> salva il file (su iPhone in "File") e aprilo da qui. Le segnalazioni nuove vengono aggiunte, quelle già presenti aggiornate se più recenti. Nessun doppione.</p>
     <label class="btn sec filebtn">Apri file ricevuto<input type="file" id="importFile" accept=".txt,.json,text/plain,application/json"></label>
   </section>
   <section class="panel"><h2>Archivio</h2>
@@ -521,7 +522,7 @@ async function share(files,text){
   /* Android accetta solo alcuni tipi (pdf, txt, immagini...). Si prova con tutti i file, poi senza i dati, poi solo il testo. */
   const tent=[files,files.filter(f=>f.type==='application/pdf')].filter((x,i,a)=>x.length&&(i===0||x.length!==a[0].length));
   if(navigator.share){
-    for(const fs of tent){try{if(navigator.canShare&&navigator.canShare({files:fs})){await navigator.share(text?{files:fs,text,title:'Report manutenzione'}:{files:fs,title:'Report manutenzione'});
+    for(const fs of tent){try{if(navigator.canShare&&navigator.canShare({files:fs})){await navigator.share({files:fs});
       if(fs.length<files.length)toast('Il file dati non è passato: usa "Backup completo" per inviarlo a parte.');return true}}
       catch(e){if(e&&e.name==='AbortError')return false}}
   }
@@ -632,8 +633,7 @@ function makePDF(list,titolo){
         y+=1.2});
       y+=2.3}
     if(s.ricambi){label('RICAMBI NECESSARI');para(s.ricambi,{x:L+6,w:W-9,gap:3.5})}
-    if((s.foto||[]).length){label('FOTO');const ph=46,gap=4;let x=L+6;
-      need(ph+2);
+    if((s.foto||[]).length){const ph=46,gap=4;let x=L+6;need(ph+14);label('FOTO');
       s.foto.forEach(f=>{const r=ph/f.h,pw=Math.min(f.w*r,(W-6-gap*2)/2.2),hh=f.h*(pw/f.w);
         if(x+pw>R){x=L+6;y+=ph+gap;need(ph+2)}
         try{doc.setDrawColor(...C.line);doc.setLineWidth(0.3);doc.addImage(f.data,'JPEG',x,y,pw,hh);doc.rect(x,y,pw,hh,'S')}catch(e){}

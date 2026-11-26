@@ -279,7 +279,7 @@ async function avvio(){
   if(dati)S=Object.assign(blank(),dati);
   else{const ls=load();if(ls){S=ls;if(idbOk)save()}else{seed(S);save()}}
   render();
-  if(location.search.includes('import-condiviso')){try{const c=await caches.open('condivisi');const r=await c.match('./file-condiviso');if(r){const x=importa(JSON.parse(await r.text()));await c.delete('./file-condiviso');render();toast(`Importato${x.da?' da '+x.da:''}: ${x.nuove} nuove, ${x.agg} aggiornate.`)}}catch(e){toast('File ricevuto non valido: usa il file -dati.txt o il backup.')}history.replaceState(null,'',location.pathname)}
+  if(location.search.includes('import-condiviso')){try{const c=await caches.open('condivisi');const r=await c.match('./file-condiviso');if(r){const x=importa(leggiDati(await r.text()));await c.delete('./file-condiviso');render();toast(`Importato${x.da?' da '+x.da:''}: ${x.nuove} nuove, ${x.agg} aggiornate.`)}}catch(e){toast('File ricevuto non valido: usa il PDF del report o il backup.')}history.replaceState(null,'',location.pathname)}
 }
 const isResp=()=>S.settings.ruolo==='responsabile';
 const find=id=>S.segn.find(s=>s.id===id);
@@ -489,12 +489,12 @@ function vScambio(){
     <div class="field"><label class="lbl" for="periodo">Cosa inviare</label><select id="periodo" data-sc="periodo">${Object.entries(PERIODI).map(([k,v])=>`<option value="${k}" ${k===scambio.periodo?'selected':''}>${v}</option>`).join('')}</select>
     <p class="hint">${n} segnalazion${n===1?'e':'i'}${S.settings.ultimoInvio?` · ultimo invio ${fmt(S.settings.ultimoInvio)}`:''}</p></div>
     <button class="btn" data-act="invia">Invia su WhatsApp</button>
-    <p class="hint" style="margin-top:-6px">Invia il file da importare e il PDF come documenti. Per il testo in chat usa "Copia riepilogo". ${isResp()?'Il tuo report contiene anche l\'elenco macchine, così i manutentori lo ricevono aggiornato.':''}</p>
-    <div class="row"><button class="btn sec" data-act="pdfReport">Solo PDF</button><button class="btn ghost" data-act="copia">Copia riepilogo</button></div>
+    <p class="hint" style="margin-top:-6px">Invia un unico PDF che si legge come report e si importa nell&#39;app. Per il testo in chat usa "Copia riepilogo". ${isResp()?'Il tuo report contiene anche l\'elenco macchine, così i manutentori lo ricevono aggiornato.':''}</p>
+    <div class="row"><button class="btn ghost" data-act="copia">Copia riepilogo</button></div>
   </section>
   <section class="panel"><h2>Ricevi report</h2>
-    <p class="muted" style="margin:0"><b>Android:</b> in WhatsApp tieni premuto il file che finisce con <b>-dati.txt</b> (o il backup) → Condividi → <b>Manutenzioni</b>: si importa da solo. <b>iPhone o PC:</b> salva il file (su iPhone in "File") e aprilo da qui. Le segnalazioni nuove vengono aggiunte, quelle già presenti aggiornate se più recenti. Nessun doppione.</p>
-    <label class="btn sec filebtn">Apri file ricevuto<input type="file" id="importFile" accept=".txt,.json,text/plain,application/json"></label>
+    <p class="muted" style="margin:0"><b>Android:</b> in WhatsApp tieni premuto il file che finisce con il <b>PDF del report</b> (o il backup) → Condividi → <b>Manutenzioni</b>: si importa da solo. <b>iPhone o PC:</b> salva il file (su iPhone in "File") e aprilo da qui. Le segnalazioni nuove vengono aggiunte, quelle già presenti aggiornate se più recenti. Nessun doppione.</p>
+    <label class="btn sec filebtn">Apri file ricevuto<input type="file" id="importFile" accept=".pdf,.txt,.json,application/pdf,text/plain,application/json"></label>
   </section>
   <section class="panel"><h2>Archivio</h2>
     ${isResp()?'<button class="btn sec" data-act="csv">Esporta per Excel</button>':''}
@@ -533,9 +533,14 @@ async function share(files,text){
 async function invia(){
   const list=perReport();if(!list.length){toast('Nessuna segnalazione nel periodo scelto.');return}
   const name=baseName();
-  const files=[new File([JSON.stringify(pacchetto(list))],name+'-dati.txt',{type:'text/plain'})];
-  const pdf=makePDF(list,'Report manutenzione');if(pdf)files.push(new File([pdf],name+'.pdf',{type:'application/pdf'}));
-  if(await share(files,testo(list))){S.settings.ultimoInvio=nowIso();save();render()}
+  const pdf=makePDF(list,'Report manutenzione',pacchetto(list));
+  const files=pdf?[new File([pdf],name+'.pdf',{type:'application/pdf'})]:[new File([JSON.stringify(pacchetto(list))],name+'-dati.txt',{type:'text/plain'})];
+  if(await share(files,'')){S.settings.ultimoInvio=nowIso();save();render()}
+}
+function leggiDati(txt){
+  if(txt.startsWith('%PDF')){const m=txt.match(/MDP1:([A-Za-z0-9+\/=\s\\]+?):MDP1/);if(!m)throw new Error('Questo PDF non contiene dati di Manutenzioni da programmare.');
+    return JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/[\s\\]/g,'')))))}
+  return JSON.parse(txt);
 }
 function importa(obj){
   if(!obj||obj.app!=='storico-guasti')throw new Error('Questo file non è un report di Manutenzioni da programmare.');
@@ -555,7 +560,7 @@ function csv(){
 
 /* ---------- PDF ---------- */
 function clean(t){return String(t==null?'':t).replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[–—]/g,'-').replace(/…/g,'...').replace(/[^\x00-\xFF\n]/g,'')}
-function makePDF(list,titolo){
+function makePDF(list,titolo,dati){
   if(!window.jspdf){toast('Libreria PDF non caricata: serve la connessione la prima volta.');return null}
   const {jsPDF}=window.jspdf,doc=new jsPDF({unit:'mm',format:'a4'});
   const PW=210,L=15,R=195,W=180,TOP=18,B=277;
@@ -656,6 +661,7 @@ function makePDF(list,titolo){
       font(7.5,'bold',[255,255,255]);doc.text(fit(titolo,120),L,6.5);font(7.5,'normal',[180,196,212]);doc.text(gen,R,6.5,{align:'right'})}
     doc.setDrawColor(...C.line);doc.setLineWidth(0.3);doc.line(L,284,R,284);
     font(7.3,'normal',C.grey);doc.text(clean(`Manutenzioni da programmare  ·  ${autore}`),L,289);doc.text(`Pagina ${i} di ${n}`,R,289,{align:'right'})}
+  if(dati){try{doc.setProperties({title:titolo,subject:'Manutenzioni da programmare - dati importabili',keywords:'MDP1:'+btoa(unescape(encodeURIComponent(JSON.stringify(dati))))+':MDP1'})}catch(e){}}
   return doc.output('blob');
 }
 
@@ -776,7 +782,7 @@ const A={
   copia:async()=>{const l=perReport();if(!l.length){toast('Nessuna segnalazione nel periodo scelto.');return}
     try{await navigator.clipboard.writeText(testo(l));toast('Riepilogo copiato: incollalo su WhatsApp.')}catch(e){toast('Copia non riuscita su questo dispositivo.')}},
   csv:async()=>{await share([new File([csv()],`guasti-excel-${stamp()}.csv`,{type:'text/csv'})],'')},
-  backup:async()=>{const b=Object.assign(pacchetto(S.segn),{tipo:'backup',macchine:S.macchine});await share([new File([JSON.stringify(b)],`backup-manutenzioni-${initials(S.settings.nome)}-${stamp()}.txt`,{type:'text/plain'})],'')},
+  backup:async()=>{const b=Object.assign(pacchetto(S.segn),{tipo:'backup',macchine:S.macchine});const p=makePDF(S.segn,'Backup completo',b);const n=`backup-manutenzioni-${initials(S.settings.nome)}-${stamp()}`;await share([p?new File([p],n+'.pdf',{type:'application/pdf'}):new File([JSON.stringify(b)],n+'.txt',{type:'text/plain'})],'')},
   ruolo:async b=>{const v=b.dataset.v;if(v===S.settings.ruolo)return;
     if(v==='manutentore'){S.settings.ruolo='manutentore';save();render();return}
     if(!S.settings.pin){chiediNuovoPin('Crea il PIN del responsabile',()=>{S.settings.ruolo='responsabile';save();render()});return}
@@ -805,9 +811,9 @@ document.addEventListener('change',async e=>{const t=e.target;
     const k=Math.min(1,480/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
     c.width=Math.max(1,Math.round(img.naturalWidth*k));c.height=Math.max(1,Math.round(img.naturalHeight*k));c.getContext('2d').drawImage(img,0,0,c.width,c.height);
     S.settings.logo=c.toDataURL('image/png');S.settings.logoW=c.width;S.settings.logoH=c.height;URL.revokeObjectURL(url);save();render();toast('Logo salvato');t.value=''}
-  if(t.id==='importFile'&&t.files[0]){try{const r=importa(JSON.parse(await t.files[0].text()));render();
+  if(t.id==='importFile'&&t.files[0]){try{const r=importa(leggiDati(await t.files[0].text()));render();
       toast(`Importato${r.da?' da '+r.da:''}: ${r.nuove} nuove, ${r.agg} aggiornate${r.mac?', '+r.mac+' macchine':''}.`)}
-    catch(err){toast(err.message&&err.message.includes('Manutenzioni')?err.message:'File non valido: scegli il file -dati.txt o il backup ricevuto.')}t.value=''}
+    catch(err){toast(err.message&&err.message.includes('Manutenzioni')?err.message:'File non valido: scegli il PDF del report o il backup ricevuto.')}t.value=''}
 });
 let lastY=0;
 window.addEventListener('scroll',()=>{const y=window.scrollY,d=y-lastY;if(Math.abs(d)<8)return;

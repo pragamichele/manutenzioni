@@ -1,6 +1,6 @@
 /* Manutenzioni da programmare - salvataggio del programma per l'uso offline */
-const CACHE='manutenzioni-v4d';
-const FILES=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png',
+const CACHE='manutenzioni-v4e';
+const FILES=['./','./index.html','./manifest.webmanifest','./icon-192_1.png','./icon-512_1.png',
   'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js',
   'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(CACHE).then(c=>Promise.all(FILES.map(u=>c.add(u).catch(()=>{})))).then(()=>self.skipWaiting()))});

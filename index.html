@@ -114,7 +114,8 @@ textarea.short{min-height:50px}
 /* Lista */
 .summary{display:flex;gap:18px;flex-wrap:wrap;align-items:baseline}
 .summary b{font-family:var(--f-display);font-size:30px;line-height:1;margin-right:4px}
-.filters{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.filters{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.filters .q{grid-column:1/-1}
 @media (max-width:520px){.filters{grid-template-columns:1fr 1fr}.filters .q{grid-column:1/-1}}
 .filters select,.filters input{min-height:46px;font-size:16px}
 .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,400px),1fr));gap:10px;align-items:start}
@@ -155,6 +156,11 @@ textarea.short{min-height:50px}
 .note .by{font-size:13px;color:var(--muted)}
 .lavedit{display:grid;grid-template-columns:1fr 44px;gap:8px;align-items:start}
 .iconbtn{width:44px;height:50px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font-size:22px;line-height:1}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px}
+.thumb{position:relative;width:96px;height:96px;border-radius:10px;overflow:hidden;border:1px solid var(--line);padding:0;background:var(--surface-2)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.xfoto{position:absolute;top:4px;right:4px;width:30px;height:30px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:20px;line-height:1}
+.fotobig{width:100%;max-height:70vh;object-fit:contain;border-radius:10px;background:#000}
 .closed{background:var(--g1-soft);border-radius:10px;padding:12px 14px}
 
 /* Codice macchina */
@@ -220,6 +226,7 @@ const KEY='storico-guasti-v1';
 const TIPI=['Meccanico','Elettrico','Pneumatico','Oleodinamico','Software / PLC','Igienico-sanitario','Sicurezza','Altro'];
 const GRAV={1:'Bassa',2:'Media',3:'Alta',4:'Critica'};
 const QUANDO=['Appena possibile','Prossimo fermo settimanale','Manutenzione programmata','Manutenzione annuale'];
+const MAXFOTO=4;
 const STATI={aperta:'Da programmare',attesa:'In attesa ricambio',chiusa:'Completata'};
 const PERIODI={oggi:'Modificate oggi','7':'Ultimi 7 giorni',ultimo:"Dall'ultimo invio",aperte:'Tutte le aperte',tutte:'Tutte'};
 const inFrame=(()=>{try{return window.self!==window.top}catch(e){return true}})();
@@ -237,29 +244,45 @@ function blank(){return{settings:{nome:'',ruolo:'manutentore',pin:'',ultimoInvio
 function seed(b){
   const t=h=>new Date(Date.now()-h*36e5).toISOString();
   b.macchine={
-    'TRT-0412':{codice:'TRT-0412',descrizione:'Formatrice tortellini',linea:'Linea 2'},
-    'CNF-0233':{codice:'CNF-0233',descrizione:'Termosaldatrice vaschette',linea:'Linea 2'},
-    'GN-0107':{codice:'GN-0107',descrizione:'Estrusore gnocchi',linea:'Linea 5'}};
+    'TRT-0412':{codice:'TRT-0412',descrizione:'Formatrice tortellini',reparto:'Pasta ripiena',linea:'Linea 2'},
+    'CNF-0233':{codice:'CNF-0233',descrizione:'Termosaldatrice vaschette',reparto:'Confezionamento',linea:'Linea 2'},
+    'GN-0107':{codice:'GN-0107',descrizione:'Estrusore gnocchi',reparto:'Gnocchi',linea:'Linea 5'}};
   b.segn=[
-    {id:'ESEMPIO-1',esempio:true,codice:'TRT-0412',descrizione:'Formatrice tortellini',linea:'Linea 2',tipo:'Meccanico',gravita:3,quando:'Prossimo fermo settimanale',
+    {id:'ESEMPIO-1',esempio:true,codice:'TRT-0412',descrizione:'Formatrice tortellini',reparto:'Pasta ripiena',linea:'Linea 2',tipo:'Meccanico',gravita:3,quando:'Prossimo fermo settimanale',
      problema:'Gioco sul cuscinetto lato trasmissione dei rulli calibratori. Rumore in aumento da inizio turno e supporto più caldo del solito. La macchina lavora, va controllata al fermo.',
      lavori:[{t:'Sostituire cuscinetto lato trasmissione rullo superiore',fatto:false},{t:'Controllare allineamento rulli calibratori',fatto:false},{t:'Verificare tensione cinghia',fatto:true,da:'Esempio',il:t(5)}],
      ricambi:'Cuscinetto 6205-2RS (2 pz)',note:[{t:'Rumore ancora presente a fine turno, non peggiorato.',da:'Esempio',il:t(3)}],autore:'Esempio',creata:t(26),aggiornata:t(3),stato:'aperta'},
-    {id:'ESEMPIO-2',esempio:true,codice:'CNF-0233',descrizione:'Termosaldatrice vaschette',linea:'Linea 2',tipo:'Igienico-sanitario',gravita:2,quando:'Manutenzione programmata',
+    {id:'ESEMPIO-2',esempio:true,codice:'CNF-0233',descrizione:'Termosaldatrice vaschette',reparto:'Confezionamento',linea:'Linea 2',tipo:'Igienico-sanitario',gravita:2,quando:'Manutenzione programmata',
      problema:'Guarnizione del carter lato uscita rovinata, si sta staccando in un punto.',lavori:[{t:'Sostituire guarnizione carter lato uscita',fatto:false}],
      ricambi:'Guarnizione carter (codice da verificare)',note:[],autore:'Esempio',creata:t(50),aggiornata:t(20),stato:'attesa'},
-    {id:'ESEMPIO-3',esempio:true,codice:'GN-0107',descrizione:'Estrusore gnocchi',linea:'Linea 5',tipo:'Elettrico',gravita:1,quando:'Manutenzione annuale',
+    {id:'ESEMPIO-3',esempio:true,codice:'GN-0107',descrizione:'Estrusore gnocchi',reparto:'Gnocchi',linea:'Linea 5',tipo:'Elettrico',gravita:1,quando:'Manutenzione annuale',
      problema:'Lampada spia "pronto" sul quadro bordo macchina bruciata.',lavori:[{t:'Sostituire lampada spia',fatto:false}],ricambi:'',note:[],autore:'Esempio',creata:t(80),aggiornata:t(80),stato:'aperta'}];
 }
-function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(blank(),JSON.parse(r))}catch(e){}const b=blank();seed(b);return b}
-let S=load();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function load(){try{const r=localStorage.getItem(KEY);if(r)return Object.assign(blank(),JSON.parse(r))}catch(e){}return null}
+let S=blank();
+/* Archivio su IndexedDB (spazio molto più ampio, serve per le foto). localStorage resta come riserva. */
+let dbp=null;
+function db(){if(!dbp)dbp=new Promise((ok,ko)=>{try{const r=indexedDB.open('manutenzioni',1);r.onupgradeneeded=()=>r.result.createObjectStore('dati');r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)}catch(e){ko(e)}});return dbp}
+async function idbGet(){const d=await db();return new Promise((ok,ko)=>{const q=d.transaction('dati').objectStore('dati').get(KEY);q.onsuccess=()=>ok(q.result);q.onerror=()=>ko(q.error)})}
+async function idbPut(v){const d=await db();return new Promise((ok,ko)=>{const t=d.transaction('dati','readwrite');t.objectStore('dati').put(v,KEY);t.oncomplete=()=>ok();t.onerror=()=>ko(t.error)})}
+let idbOk=false,saveT=null;
+function save(){clearTimeout(saveT);saveT=setTimeout(async()=>{
+  const snap=JSON.parse(JSON.stringify(S));
+  if(idbOk){try{await idbPut(snap);try{localStorage.removeItem(KEY)}catch(e){}return}catch(e){}}
+  try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast('Memoria piena: fai un backup e togli qualche foto dagli interventi chiusi.')}},120)}
+async function avvio(){
+  let dati=null;
+  try{dati=await idbGet();idbOk=true;try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}}catch(e){}
+  if(dati)S=Object.assign(blank(),dati);
+  else{const ls=load();if(ls){S=ls;if(idbOk)save()}else{seed(S);save()}}
+  render();
+}
 const isResp=()=>S.settings.ruolo==='responsabile';
 const find=id=>S.segn.find(s=>s.id===id);
 
 /* ---------- Stato interfaccia ---------- */
 let view='lista',param=null,draft=null;
-const filtri={stato:'aperte',grav:'',linea:'',autore:'',q:''};
+const filtri={stato:'aperte',grav:'',reparto:'',linea:'',autore:'',q:''};
 const scambio={periodo:'7'};
 
 function render(){
@@ -283,9 +306,10 @@ function filtered(){
     if(filtri.stato==='attesa'&&s.stato!=='attesa')return false;
     if(filtri.stato==='chiuse'&&s.stato!=='chiusa')return false;
     if(filtri.grav&&String(s.gravita)!==filtri.grav)return false;
+    if(filtri.reparto&&s.reparto!==filtri.reparto)return false;
     if(filtri.linea&&s.linea!==filtri.linea)return false;
     if(filtri.autore&&s.autore!==filtri.autore)return false;
-    if(q&&!(s.codice+' '+s.descrizione+' '+s.problema+' '+s.tipo+' '+(s.lavori||[]).map(l=>l.t).join(' ')).toLowerCase().includes(q))return false;
+    if(q&&!(s.codice+' '+s.descrizione+' '+s.problema+' '+s.tipo+' '+' '+(s.reparto||'')+' '+(s.linea||'')+' '+(s.ricambi||'')+' '+(s.lavori||[]).map(l=>l.t).join(' ')).toLowerCase().includes(q))return false;
     return true}).sort((a,b)=>{
       if(a.stato==='chiusa'&&b.stato==='chiusa')return (b.chiusaIl||'').localeCompare(a.chiusaIl||'');
       if((a.stato==='chiusa')!==(b.stato==='chiusa'))return a.stato==='chiusa'?1:-1;
@@ -295,9 +319,10 @@ function card(s){
   const fatti=(s.lavori||[]).filter(l=>l.fatto).length,tot=(s.lavori||[]).length;
   return `<button class="card g${s.gravita}" data-act="open" data-v="${esc(s.id)}"><span class="stripe"></span><span class="cbody">
     <span class="crow"><span class="code">${esc(s.codice)}</span><span class="pill">${GRAV[s.gravita]}</span>${s.stato!=='aperta'?`<span class="pill st ${s.stato}">${STATI[s.stato]}</span>`:''}${s.esempio?'<span class="pill st">Esempio</span>':''}</span>
-    <span class="ctitle">${esc(s.descrizione||'Macchina senza descrizione')}${s.linea?` <span class="muted">· ${esc(s.linea)}</span>`:''}</span>
+    <span class="ctitle">${esc(s.descrizione||'Macchina senza descrizione')}</span>
+    ${s.reparto||s.linea?`<span class="cmeta"><b>${esc([s.reparto,s.linea].filter(Boolean).join(' · '))}</b></span>`:''}
     <span class="cprob">${esc(s.problema)}</span>
-    <span class="cmeta">${esc(s.tipo)} · ${esc(s.quando)}${tot?` · ${fatti}/${tot} lavori`:''}</span>
+    <span class="cmeta">${esc(s.tipo)} · ${esc(s.quando)}${tot?` · ${fatti}/${tot} lavori`:''}${(s.foto||[]).length?` · ${s.foto.length} foto`:''}</span>
     <span class="cmeta">${esc(s.autore)} · ${fmt(s.creata)}</span></span></button>`;
 }
 function listArea(){const l=filtered();return l.length?l.map(card).join(''):`<div class="empty">Nessuna segnalazione con questi filtri.</div>`}
@@ -305,6 +330,7 @@ function vLista(){
   const aperte=S.segn.filter(s=>s.stato!=='chiusa');
   const crit=aperte.filter(s=>s.gravita>=4).length,alte=aperte.filter(s=>s.gravita===3).length;
   const linee=[...new Set(S.segn.map(s=>s.linea).filter(Boolean))].sort();
+  const reparti=[...new Set(S.segn.map(s=>s.reparto).filter(Boolean))].sort();
   const autori=[...new Set(S.segn.map(s=>s.autore).filter(Boolean))].sort();
   const opt=(arr,sel,all)=>`<option value="">${all}</option>`+arr.map(v=>`<option ${v===sel?'selected':''} value="${esc(v)}">${esc(v)}</option>`).join('');
   const chip=(k,l)=>`<button class="chip" data-act="fstato" data-v="${k}" aria-pressed="${filtri.stato===k}">${l}</button>`;
@@ -318,6 +344,7 @@ function vLista(){
   <div class="chips">${chip('aperte','Da fare')}${chip('attesa','Attesa ricambio')}${chip('chiuse','Chiuse')}${chip('tutte','Tutte')}</div>
   <div class="filters">
     <input class="q" id="fq" data-filt="q" type="search" placeholder="Cerca codice, macchina, testo" value="${esc(filtri.q)}">
+    <select id="fr" data-filt="reparto" aria-label="Reparto">${opt(reparti,filtri.reparto,'Tutti i reparti')}</select>
     <select id="fl" data-filt="linea" aria-label="Linea">${opt(linee,filtri.linea,'Tutte le linee')}</select>
     <select id="fg" data-filt="grav" aria-label="Gravità"><option value="">Ogni gravità</option>${[4,3,2,1].map(k=>`<option value="${k}" ${String(k)===filtri.grav?'selected':''}>${GRAV[k]}</option>`).join('')}</select>
     ${autori.length>1?`<select id="fa" data-filt="autore" aria-label="Manutentore">${opt(autori,filtri.autore,'Tutti i manutentori')}</select>`:''}
@@ -335,12 +362,15 @@ function vDettaglio(){
   <div class="dhead g${s.gravita}"><div class="crow"><span class="code" style="font-size:18px">${esc(s.codice)}</span><span class="pill">${GRAV[s.gravita]}</span><span class="pill st ${s.stato}">${STATI[s.stato]}</span>${s.esempio?'<span class="pill st">Esempio</span>':''}</div>
     <h1>${esc(s.descrizione||'Macchina senza descrizione')}</h1></div>
   <section class="panel"><dl class="kv" style="margin:0">
-    <div><dt>Linea</dt><dd>${esc(s.linea||'—')}</dd></div><div><dt>Tipo</dt><dd>${esc(s.tipo)}</dd></div>
+    <div><dt>Reparto</dt><dd>${esc(s.reparto||'—')}</dd></div><div><dt>Linea</dt><dd>${esc(s.linea||'—')}</dd></div>
+    <div><dt>Tipo</dt><dd>${esc(s.tipo)}</dd></div>
     <div><dt>Quando intervenire</dt><dd>${esc(s.quando)}</dd></div><div><dt>Segnalata da</dt><dd>${esc(s.autore)}<br><span class="muted mono" style="font-size:14px">${fmt(s.creata)}</span></dd></div>
   </dl>
   ${(s.tipo==='Igienico-sanitario'||s.tipo==='Sicurezza')&&s.gravita>=3?`<div class="warn">Problema ${s.tipo==='Sicurezza'?'di sicurezza':'igienico-sanitario'} con gravità ${GRAV[s.gravita].toLowerCase()}: valuta se può davvero aspettare.</div>`:''}
   <div><span class="lbl">Problema</span><p class="prose">${esc(s.problema)}</p></div>
-  ${s.ricambi?`<div><span class="lbl">Ricambi necessari</span><p class="prose">${esc(s.ricambi)}</p></div>`:''}</section>
+  ${s.ricambi?`<div><span class="lbl">Ricambi necessari</span><p class="prose">${esc(s.ricambi)}</p></div>`:''}
+  ${(s.foto||[]).length?`<div><span class="lbl">Foto</span><div class="thumbs">${s.foto.map((f,i)=>`<button class="thumb" data-act="vediFoto" data-v="${i}" aria-label="Apri foto ${i+1}"><img src="${f.data}" alt="Foto ${i+1}"></button>`).join('')}</div></div>`:''}
+  <button class="btn ghost" data-act="modifica" style="min-height:44px">+ Aggiungi foto</button></section>
 
   <section class="panel"><h2>Lavori ${s.lavori&&s.lavori.length?`<span class="muted" style="font-size:17px">${fatti}/${s.lavori.length} fatti</span>`:''}</h2>
     ${lav?`<div class="lav">${lav}</div>`:'<p class="muted" style="margin:0">Nessun lavoro in elenco.</p>'}
@@ -363,7 +393,7 @@ function vDettaglio(){
 function touch(s){s.aggiornata=nowIso();save()}
 
 /* ---------- Nuova / modifica ---------- */
-function newDraft(codice){const m=S.macchine[codice]||{};return{codice,descrizione:m.descrizione||'',linea:m.linea||'',tipo:'',gravita:0,quando:'',problema:'',lavori:[{t:'',fatto:false}],ricambi:'',autore:S.settings.nome||'',editId:null}}
+function newDraft(codice){const m=S.macchine[codice]||{};return{codice,descrizione:m.descrizione||'',reparto:m.reparto||'',linea:m.linea||'',foto:[],tipo:'',gravita:0,quando:'',problema:'',lavori:[{t:'',fatto:false}],ricambi:'',autore:S.settings.nome||'',editId:null}}
 function setCode(c){c=String(c||'').trim();if(!c){toast('Scrivi il codice della macchina.');return}draft=newDraft(c);go('nuova')}
 function vNuova(){
   if(!draft) return `<h1>Quale macchina?</h1>
@@ -378,6 +408,7 @@ function vNuova(){
   const d=draft;
   const aperte=S.segn.filter(s=>s.codice===d.codice&&s.stato!=='chiusa'&&s.id!==d.editId);
   const linee=[...new Set([...Object.values(S.macchine).map(m=>m.linea),...S.segn.map(s=>s.linea)].filter(Boolean))].sort();
+  const reparti=[...new Set([...Object.values(S.macchine).map(m=>m.reparto),...S.segn.map(s=>s.reparto)].filter(Boolean))].sort();
   const chips=(f,arr)=>arr.map(v=>`<button class="chip" data-act="pick" data-f="${f}" data-v="${esc(v)}" aria-pressed="${d[f]===v}">${esc(v)}</button>`).join('');
   return `<h1>${d.editId?'Modifica segnalazione':'Nuova segnalazione'}</h1>
   <div class="mach"><span class="code">${esc(d.codice)}</span>${d.editId?'':'<button class="btn ghost small" data-act="cambiaMach">Cambia</button>'}</div>
@@ -385,6 +416,7 @@ function vNuova(){
   <section class="panel">
     <div class="field"><label class="lbl" for="dDesc">Macchina</label><input id="dDesc" data-f="descrizione" type="text" value="${esc(d.descrizione)}" placeholder="Es. Formatrice tortellini"></div>
     <div class="field"><label class="lbl" for="dLinea">Linea produttiva</label><input id="dLinea" data-f="linea" type="text" list="lineeList" value="${esc(d.linea)}" placeholder="Es. Linea 2"><datalist id="lineeList">${linee.map(l=>`<option value="${esc(l)}">`).join('')}</datalist></div>
+    <div class="field"><label class="lbl" for="dRep">Reparto</label><input id="dRep" data-f="reparto" type="text" list="repartiList" value="${esc(d.reparto)}" placeholder="Es. Pasta ripiena"><datalist id="repartiList">${reparti.map(l=>`<option value="${esc(l)}">`).join('')}</datalist></div>
     ${S.macchine[d.codice]?'<p class="hint" style="margin-top:-6px">Dati macchina compilati dall\'ultima volta.</p>':''}
   </section>
   <section class="panel">
@@ -400,6 +432,10 @@ function vNuova(){
     </div></div>
     <button class="btn sec" data-act="addLavD">+ Aggiungi lavoro</button>
     <div class="field"><label class="lbl" for="dRic">Ricambi necessari</label><textarea id="dRic" class="grow short" data-f="ricambi" placeholder="Codice, quantità (facoltativo)">${esc(d.ricambi)}</textarea></div>
+    <div class="field"><span class="lbl">Foto <span style="text-transform:none;letter-spacing:0;font-weight:500">(pezzo rotto, ricambio, targhetta... max ${MAXFOTO})</span></span>
+      ${d.foto.length?`<div class="thumbs">${d.foto.map((f,i)=>`<div class="thumb"><img src="${f.data}" alt="Foto ${i+1}"><button class="xfoto" data-act="delFoto" data-v="${i}" aria-label="Togli foto ${i+1}">×</button></div>`).join('')}</div>`:''}
+      ${d.foto.length<MAXFOTO?`<div class="row"><label class="btn sec filebtn">Scatta foto<input type="file" id="fotoCam" accept="image/*" capture="environment"></label><label class="btn ghost filebtn">Dalla galleria<input type="file" id="fotoGal" accept="image/*" multiple></label></div>`:''}
+    </div>
   </section>
   <section class="panel">
     <div class="field"><label class="lbl" for="dAut">Manutentore</label><input id="dAut" data-f="autore" type="text" value="${esc(d.autore)}" placeholder="Nome e cognome" ${d.editId?'disabled':''}></div>
@@ -416,14 +452,22 @@ function salva(){
   if(err.length){const e=$('#formErr');e.hidden=false;e.textContent='Manca: '+err.join(', ')+'.';e.scrollIntoView({block:'center',behavior:'smooth'});return}
   if(!S.settings.nome)S.settings.nome=d.autore.trim();
   const now=nowIso(),lavori=d.lavori.map(l=>Object.assign({},l,{t:l.t.trim()})).filter(l=>l.t);
-  S.macchine[d.codice]={codice:d.codice,descrizione:d.descrizione.trim(),linea:d.linea.trim()};
+  S.macchine[d.codice]={codice:d.codice,descrizione:d.descrizione.trim(),reparto:d.reparto.trim(),linea:d.linea.trim()};
   let id=d.editId;
-  const campi={descrizione:d.descrizione.trim(),linea:d.linea.trim(),tipo:d.tipo,gravita:d.gravita,quando:d.quando,problema:d.problema.trim(),lavori,ricambi:d.ricambi.trim(),aggiornata:now};
+  const campi={descrizione:d.descrizione.trim(),reparto:d.reparto.trim(),linea:d.linea.trim(),foto:d.foto.slice(),tipo:d.tipo,gravita:d.gravita,quando:d.quando,problema:d.problema.trim(),lavori,ricambi:d.ricambi.trim(),aggiornata:now};
   if(id){Object.assign(find(id),campi)}
   else{id=newId();S.segn.push(Object.assign({id,codice:d.codice,note:[],autore:d.autore.trim(),creata:now,stato:'aperta'},campi))}
   save();draft=null;go('dettaglio',id);toast('Segnalazione salvata · '+fmt(now));
 }
 
+async function leggiFoto(file){
+  const url=URL.createObjectURL(file),img=new Image();img.src=url;
+  try{await img.decode()}catch(e){URL.revokeObjectURL(url);return null}
+  const k=Math.min(1,1280/Math.max(img.naturalWidth,img.naturalHeight)),c=document.createElement('canvas');
+  c.width=Math.round(img.naturalWidth*k);c.height=Math.round(img.naturalHeight*k);
+  const ctx=c.getContext('2d');ctx.fillStyle='#fff';ctx.fillRect(0,0,c.width,c.height);ctx.drawImage(img,0,0,c.width,c.height);
+  URL.revokeObjectURL(url);return{data:c.toDataURL('image/jpeg',0.72),w:c.width,h:c.height};
+}
 /* ---------- Invia / ricevi ---------- */
 function perReport(){
   const p=scambio.periodo,list=S.segn;
@@ -445,8 +489,8 @@ function vScambio(){
     <div class="row"><button class="btn sec" data-act="pdfReport">Solo PDF</button><button class="btn ghost" data-act="copia">Copia riepilogo</button></div>
   </section>
   <section class="panel"><h2>Ricevi report</h2>
-    <p class="muted" style="margin:0">Salva il file .json ricevuto su WhatsApp (su iPhone in "File"), poi aprilo da qui. Le segnalazioni nuove vengono aggiunte, quelle già presenti aggiornate se più recenti. Nessun doppione.</p>
-    <label class="btn sec filebtn">Apri file ricevuto<input type="file" id="importFile" accept=".json,application/json,text/plain"></label>
+    <p class="muted" style="margin:0">Salva il file dati ricevuto su WhatsApp (quello che finisce con <b>-dati.txt</b> o il backup .txt; su iPhone in "File"), poi aprilo da qui. Le segnalazioni nuove vengono aggiunte, quelle già presenti aggiornate se più recenti. Nessun doppione.</p>
+    <label class="btn sec filebtn">Apri file ricevuto<input type="file" id="importFile" accept=".txt,.json,text/plain,application/json"></label>
   </section>
   <section class="panel"><h2>Archivio</h2>
     ${isResp()?'<button class="btn sec" data-act="csv">Esporta per Excel</button>':''}
@@ -460,19 +504,24 @@ function testo(list){
   const sorted=list.slice().sort((a,b)=>(a.stato==='chiusa')-(b.stato==='chiusa')||b.gravita-a.gravita);
   return head+'\n\n'+sorted.map(s=>{const p=s.problema.length>110?s.problema.slice(0,110)+'…':s.problema;
     const lv=(s.lavori||[]).length?` · ${(s.lavori||[]).filter(l=>l.fatto).length}/${s.lavori.length} lavori`:'';
-    return `• [${GRAV[s.gravita].toUpperCase()}] ${s.codice} ${s.descrizione}${s.linea?' ('+s.linea+')':''}\n  ${p}\n  ${s.quando} · ${STATI[s.stato]}${lv}`}).join('\n\n');
+    return `• [${GRAV[s.gravita].toUpperCase()}] ${s.codice} ${s.descrizione}${s.reparto||s.linea?' ('+[s.reparto,s.linea].filter(Boolean).join(', ')+')':''}${(s.foto||[]).length?' 📷'+s.foto.length:''}\n  ${p}\n  ${s.quando} · ${STATI[s.stato]}${lv}`}).join('\n\n');
 }
 function pacchetto(list){
   const codici=new Set(list.map(s=>s.codice));
   const macchine=isResp()?S.macchine:Object.fromEntries(Object.entries(S.macchine).filter(([k])=>codici.has(k)));
   const p={app:'storico-guasti',versione:1,mittente:S.settings.nome,ruolo:S.settings.ruolo,creato:nowIso(),macchine,segnalazioni:list};
-  if(isResp()&&S.settings.logo)p.logo={data:S.settings.logo,w:S.settings.logoW,h:S.settings.logoH};
+  if(S.settings.logo)p.logo={data:S.settings.logo,w:S.settings.logoW,h:S.settings.logoH};
   return p;
 }
 function baseName(){return `guasti-${initials(S.settings.nome)}-${stamp()}`}
 async function share(files,text){
-  try{if(navigator.canShare&&navigator.canShare({files})){await navigator.share({files,text,title:'Report manutenzione'});return true}}
-  catch(e){if(e&&e.name==='AbortError')return false}
+  /* Android accetta solo alcuni tipi (pdf, txt, immagini...). Si prova con tutti i file, poi senza i dati, poi solo il testo. */
+  const tent=[files,files.filter(f=>f.type==='application/pdf')].filter((x,i,a)=>x.length&&(i===0||x.length!==a[0].length));
+  if(navigator.share){
+    for(const fs of tent){try{if(navigator.canShare&&navigator.canShare({files:fs})){await navigator.share(text?{files:fs,text,title:'Report manutenzione'}:{files:fs,title:'Report manutenzione'});
+      if(fs.length<files.length)toast('Il file dati non è passato: usa "Backup completo" per inviarlo a parte.');return true}}
+      catch(e){if(e&&e.name==='AbortError')return false}}
+  }
   files.forEach(f=>{try{const a=document.createElement('a');a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();a.remove()}catch(e){}});
   toast(inFrame?"Nell'anteprima l'invio file è bloccato: prova dall'app aperta nel browser.":'File salvati: allegali su WhatsApp.');
   return !inFrame;
@@ -480,23 +529,23 @@ async function share(files,text){
 async function invia(){
   const list=perReport();if(!list.length){toast('Nessuna segnalazione nel periodo scelto.');return}
   const name=baseName();
-  const files=[new File([JSON.stringify(pacchetto(list))],name+'.json',{type:'application/json'})];
+  const files=[new File([JSON.stringify(pacchetto(list))],name+'-dati.txt',{type:'text/plain'})];
   const pdf=makePDF(list,'Report manutenzione');if(pdf)files.push(new File([pdf],name+'.pdf',{type:'application/pdf'}));
   if(await share(files,testo(list))){S.settings.ultimoInvio=nowIso();save();render()}
 }
 function importa(obj){
   if(!obj||obj.app!=='storico-guasti')throw new Error('Questo file non è un report di Manutenzioni da programmare.');
   let nuove=0,agg=0,mac=0;const daResp=obj.ruolo==='responsabile'||obj.tipo==='backup';
-  if(daResp&&obj.logo&&typeof obj.logo.data==='string'&&obj.logo.data.startsWith('data:image/')){S.settings.logo=obj.logo.data;S.settings.logoW=obj.logo.w;S.settings.logoH=obj.logo.h}
+  if((daResp||!S.settings.logo)&&obj.logo&&typeof obj.logo.data==='string'&&obj.logo.data.startsWith('data:image/')){S.settings.logo=obj.logo.data;S.settings.logoW=obj.logo.w;S.settings.logoH=obj.logo.h}
   Object.entries(obj.macchine||{}).forEach(([k,v])=>{if((!S.macchine[k]||daResp)&&JSON.stringify(S.macchine[k])!==JSON.stringify(v)){S.macchine[k]=v;mac++}});
   (obj.segnalazioni||[]).forEach(s=>{if(!s||!s.id)return;const i=S.segn.findIndex(x=>x.id===s.id);
     if(i<0){S.segn.push(s);nuove++}else if((s.aggiornata||'')>(S.segn[i].aggiornata||'')){S.segn[i]=s;agg++}});
   save();return{nuove,agg,mac,da:obj.mittente};
 }
 function csv(){
-  const cols=['ID','Codice','Macchina','Linea','Tipo','Gravità','Quando','Stato','Problema','Lavori','Ricambi','Manutentore','Creata','Aggiornata','Chiusa da','Chiusa il','Nota chiusura'];
+  const cols=['ID','Codice','Macchina','Reparto','Linea','Tipo','Gravità','Quando','Stato','Problema','Lavori','Ricambi','Manutentore','Creata','Aggiornata','Chiusa da','Chiusa il','Nota chiusura'];
   const q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
-  const rows=S.segn.map(s=>[s.id,s.codice,s.descrizione,s.linea,s.tipo,GRAV[s.gravita],s.quando,STATI[s.stato],s.problema,(s.lavori||[]).map(l=>(l.fatto?'[x] ':'[ ] ')+l.t).join('\n'),s.ricambi,s.autore,fmt(s.creata),fmt(s.aggiornata),s.chiusaDa,fmt(s.chiusaIl),s.notaChiusura].map(q).join(';'));
+  const rows=S.segn.map(s=>[s.id,s.codice,s.descrizione,s.reparto,s.linea,s.tipo,GRAV[s.gravita],s.quando,STATI[s.stato],s.problema,(s.lavori||[]).map(l=>(l.fatto?'[x] ':'[ ] ')+l.t).join('\n'),s.ricambi,s.autore,fmt(s.creata),fmt(s.aggiornata),s.chiusaDa,fmt(s.chiusaIl),s.notaChiusura].map(q).join(';'));
   return '﻿'+cols.map(q).join(';')+'\r\n'+rows.join('\r\n');
 }
 
@@ -539,12 +588,12 @@ function makePDF(list,titolo){
     y+=28;
     /* Tabella riepilogo */
     font(12,'bold');doc.text('Riepilogo',L,y+4);y+=8;
-    const cols=[['Codice',25],['Macchina',44],['Linea',20],['Gravità',20],['Quando',37],['Stato',34]];
+    const cols=[['Codice',25],['Macchina',40],['Reparto / Linea',30],['Gravità',20],['Quando',33],['Stato',25]];
     const th=()=>{doc.setFillColor(...C.head);doc.rect(L,y,W,7.5,'F');font(7,'bold',[255,255,255]);let x=L+2.5;cols.forEach(([t,w])=>{doc.text(t.toUpperCase(),x,y+5);x+=w});y+=7.5};
     th();
     sorted.forEach((s,i)=>{if(y+7.5>B){doc.addPage();y=TOP;th()}
       if(i%2){doc.setFillColor(...C.soft);doc.rect(L,y,W,7.5,'F')}
-      let x=L+2.5;const cells=[s.codice,s.descrizione||'-',s.linea||'-',GRAV[s.gravita],s.quando,STATI[s.stato]];
+      let x=L+2.5;const cells=[s.codice,s.descrizione||'-',[s.reparto,s.linea].filter(Boolean).join(' / ')||'-',GRAV[s.gravita],s.quando,STATI[s.stato]];
       cells.forEach((v,j)=>{const w=cols[j][1];
         if(j===3){doc.setFillColor(...G[s.gravita]);doc.circle(x+1.3,y+3.7,1.3,'F');font(8.5,'bold',G[s.gravita]);doc.text(fit(v,w-6),x+4.2,y+5)}
         else{font(j===0?8.5:8.5,j===0?'bold':'normal',j===5&&s.stato==='chiusa'?C.ok:C.ink,j===0?'courier':'helvetica');doc.text(fit(v,w-3),x,y+5)}
@@ -564,7 +613,7 @@ function makePDF(list,titolo){
     font(7.5,'bold',[255,255,255]);const pt=GRAV[s.gravita].toUpperCase(),pw=doc.getTextWidth(pt)+8;
     font(12,'bold');doc.text(fit(s.descrizione||'Macchina',W-cw-pw-18),L+6+cw+4,y+7);
     doc.setFillColor(...gc);doc.roundedRect(R-3-pw,y+3,pw,5.8,2.9,2.9,'F');font(7.5,'bold',[255,255,255]);doc.text(pt,R-3-pw/2,y+6.9,{align:'center'});
-    font(8.5,'normal',C.grey);doc.text(fit(`${s.linea||'-'}   ·   ${s.tipo}   ·   ${s.quando}   ·   ${STATI[s.stato]}`,W-10),L+6,y+13.3);
+    font(8.5,'normal',C.grey);doc.text(fit(`${[s.reparto,s.linea].filter(Boolean).join(' · ')||'-'}   ·   ${s.tipo}   ·   ${s.quando}   ·   ${STATI[s.stato]}`,W-10),L+6,y+13.3);
     y+=21;
     para(`Segnalato da ${s.autore} il ${fmt(s.creata)}   ·   ultimo aggiornamento ${fmt(s.aggiornata)}   ·   ID ${s.id}`,{size:7.3,color:C.grey,x:L+6,w:W-9,gap:3});
     const label=t=>{need(10);font(7.3,'bold',C.accent);doc.text(t,L+6,y+3);y+=5.2};
@@ -580,6 +629,13 @@ function makePDF(list,titolo){
         y+=1.2});
       y+=2.3}
     if(s.ricambi){label('RICAMBI NECESSARI');para(s.ricambi,{x:L+6,w:W-9,gap:3.5})}
+    if((s.foto||[]).length){label('FOTO');const ph=46,gap=4;let x=L+6;
+      need(ph+2);
+      s.foto.forEach(f=>{const r=ph/f.h,pw=Math.min(f.w*r,(W-6-gap*2)/2.2),hh=f.h*(pw/f.w);
+        if(x+pw>R){x=L+6;y+=ph+gap;need(ph+2)}
+        try{doc.setDrawColor(...C.line);doc.setLineWidth(0.3);doc.addImage(f.data,'JPEG',x,y,pw,hh);doc.rect(x,y,pw,hh,'S')}catch(e){}
+        x+=pw+gap});
+      y+=ph+5}
     if((s.note||[]).length){label('NOTE');s.note.forEach(n=>{para(`${fmt(n.il)}  ·  ${n.da}`,{size:7.3,style:'bold',color:C.grey,x:L+6,w:W-9,gap:0.4});para(n.t,{size:9.5,x:L+6,w:W-9,gap:2.4})});y+=1}
     if(s.stato==='chiusa'){
       font(9.5);const lines=s.notaChiusura?doc.splitTextToSize(clean(s.notaChiusura),W-17):[];const h=10+lines.length*4.3;need(h+2);
@@ -612,14 +668,14 @@ function vImpostazioni(){
   <section class="panel"><span class="lbl">Logo aziendale</span>
     ${S.settings.logo?`<div class="mach" style="justify-content:center;background:#fff"><img src="${S.settings.logo}" alt="Logo caricato" style="max-height:64px;max-width:220px"></div>`:'<p class="muted" style="margin:0">Carica il file del logo dell\'azienda (PNG o JPG). Compare nella testata dell\'app e nei PDF.</p>'}
     <div class="row"><label class="btn sec filebtn">${S.settings.logo?'Cambia logo':'Carica logo'}<input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp"></label>${S.settings.logo?'<button class="btn ghost" data-act="delLogo">Rimuovi</button>':''}</div>
-    ${isResp()?'<p class="hint" style="margin:0">Il logo viaggia con i tuoi report: i manutentori lo ricevono quando importano il file.</p>':''}
+    <p class="hint" style="margin:0">Il logo viaggia con report e backup: chi importa il file lo riceve in automatico (se non ne ha già uno; quello del responsabile vale sempre).</p>
   </section>
   ${S.segn.some(s=>s.esempio)?'<section class="panel"><span class="lbl">Esempi</span><button class="btn ghost" data-act="delEsempi">Cancella le segnalazioni di esempio</button></section>':''}
   <section class="panel"><h2>Installa sul telefono</h2>
     <p style="margin:0"><b>Android:</b> apri l'app in Chrome, menu ⋮ e poi "Aggiungi a schermata Home" o "Installa app".</p>
     <p style="margin:0"><b>iPhone:</b> apri l'app in Safari, tasto Condividi e poi "Aggiungi alla schermata Home". Su iPhone è importante: dall'icona i dati non vengono cancellati.</p>
   </section>
-  <p class="hint">Versione prototipo v1 · ${S.segn.length} segnalazioni · ${Object.keys(S.macchine).length} macchine</p>`;
+  <p class="hint">Versione v3 · ${S.segn.length} segnalazioni · ${Object.keys(S.macchine).length} macchine</p>`;
 }
 async function hash(p){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('sg:'+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){let h=7;for(const c of 'sg:'+p)h=(h*31+c.charCodeAt(0))|0;return 'x'+h}}
 const pinOk=p=>/^\d{4,6}$/.test(p);
@@ -705,17 +761,19 @@ const A={
     modal({title:'Chiudi la segnalazione',ok:'Chiudi',html:`${aperti?`<div class="warn">${aperti} lavor${aperti===1?'o non è segnato':'i non sono segnati'} come fatt${aperti===1?'o':'i'}. Chiudendo restano nello storico così come sono.</div>`:''}
       <div class="field"><label class="lbl" for="nc">Cosa è stato fatto</label><textarea id="nc" class="grow" placeholder="Intervento eseguito, ricambi usati, prove fatte..."></textarea></div>`,
       onOk:m=>{s.stato='chiusa';s.chiusaDa=S.settings.nome||'—';s.chiusaIl=nowIso();s.notaChiusura=m.querySelector('#nc').value.trim();touch(s);render();toast('Segnalazione chiusa')}})},
-  modifica:()=>{const s=find(param);draft={codice:s.codice,descrizione:s.descrizione,linea:s.linea,tipo:s.tipo,gravita:s.gravita,quando:s.quando,problema:s.problema,
+  modifica:()=>{const s=find(param);draft={codice:s.codice,descrizione:s.descrizione,reparto:s.reparto||'',linea:s.linea,foto:(s.foto||[]).slice(),tipo:s.tipo,gravita:s.gravita,quando:s.quando,problema:s.problema,
     lavori:(s.lavori||[]).map(l=>Object.assign({},l)),ricambi:s.ricambi||'',autore:s.autore,editId:s.id};if(!draft.lavori.length)draft.lavori.push({t:'',fatto:false});go('nuova')},
   elimina:()=>modal({title:'Eliminare la segnalazione?',html:'<p style="margin:0">Sparisce solo da questo telefono. Se l\'hai già inviata, resta nell\'app di chi l\'ha ricevuta. Se vuoi tenerla nello storico, usa invece "Lavoro completato".</p>',ok:'Elimina',danger:true,
     onOk:()=>{S.segn=S.segn.filter(s=>s.id!==param);save();go('lista');toast('Segnalazione eliminata')}}),
   pdfUna:async()=>{const s=find(param),p=makePDF([s],'Segnalazione '+s.codice);if(p)await share([new File([p],`guasto-${s.codice.replace(/[^\w-]/g,'_')}-${stamp()}.pdf`,{type:'application/pdf'})],'')},
   invia:()=>invia(),
+  delFoto:b=>{draft.foto.splice(+b.dataset.v,1);const y=window.scrollY;render();window.scrollTo(0,y)},
+  vediFoto:b=>{const s=find(param),f=s.foto[+b.dataset.v];modal({title:`Foto ${+b.dataset.v+1} di ${s.foto.length}`,ok:'Chiudi',html:`<img class="fotobig" src="${f.data}" alt="Foto">`,onOk:()=>{}})},
   pdfReport:async()=>{const l=perReport();if(!l.length){toast('Nessuna segnalazione nel periodo scelto.');return}const p=makePDF(l,'Report manutenzione');if(p)await share([new File([p],baseName()+'.pdf',{type:'application/pdf'})],'')},
   copia:async()=>{const l=perReport();if(!l.length){toast('Nessuna segnalazione nel periodo scelto.');return}
     try{await navigator.clipboard.writeText(testo(l));toast('Riepilogo copiato: incollalo su WhatsApp.')}catch(e){toast('Copia non riuscita su questo dispositivo.')}},
   csv:async()=>{await share([new File([csv()],`guasti-excel-${stamp()}.csv`,{type:'text/csv'})],'')},
-  backup:async()=>{const b=Object.assign(pacchetto(S.segn),{tipo:'backup',macchine:S.macchine});await share([new File([JSON.stringify(b)],`backup-guasti-${initials(S.settings.nome)}-${stamp()}.json`,{type:'application/json'})],'')},
+  backup:async()=>{const b=Object.assign(pacchetto(S.segn),{tipo:'backup',macchine:S.macchine});await share([new File([JSON.stringify(b)],`backup-manutenzioni-${initials(S.settings.nome)}-${stamp()}.txt`,{type:'text/plain'})],'')},
   ruolo:async b=>{const v=b.dataset.v;if(v===S.settings.ruolo)return;
     if(v==='manutentore'){S.settings.ruolo='manutentore';save();render();return}
     if(!S.settings.pin){chiediNuovoPin('Crea il PIN del responsabile',()=>{S.settings.ruolo='responsabile';save();render()});return}
@@ -735,6 +793,9 @@ document.addEventListener('input',e=>{const t=e.target;
 document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='codiceManuale'){e.preventDefault();setCode(e.target.value)}
   if(e.key==='Escape'){if(!$('#scanner').hidden)stopScan();$('#modal').hidden=true}});
 document.addEventListener('change',async e=>{const t=e.target;
+  if((t.id==='fotoCam'||t.id==='fotoGal')&&t.files.length&&draft){let n=0;
+    for(const f of [...t.files]){if(draft.foto.length>=MAXFOTO){toast(`Massimo ${MAXFOTO} foto per intervento.`);break}const r=await leggiFoto(f);if(r){draft.foto.push(r);n++}}
+    const y=window.scrollY;render();window.scrollTo(0,y);if(n)toast(n===1?'Foto aggiunta':n+' foto aggiunte');return}
   if(t.id==='photoQR'&&t.files[0]){await decodePhoto(t.files[0]);t.value=''}
   if(t.id==='logoFile'&&t.files[0]){const url=URL.createObjectURL(t.files[0]),img=new Image();img.src=url;
     try{await img.decode()}catch(err){toast('Immagine non valida: usa un PNG o JPG.');return}
@@ -743,12 +804,12 @@ document.addEventListener('change',async e=>{const t=e.target;
     S.settings.logo=c.toDataURL('image/png');S.settings.logoW=c.width;S.settings.logoH=c.height;URL.revokeObjectURL(url);save();render();toast('Logo salvato');t.value=''}
   if(t.id==='importFile'&&t.files[0]){try{const r=importa(JSON.parse(await t.files[0].text()));render();
       toast(`Importato${r.da?' da '+r.da:''}: ${r.nuove} nuove, ${r.agg} aggiornate${r.mac?', '+r.mac+' macchine':''}.`)}
-    catch(err){toast(err.message&&err.message.includes('Manutenzioni')?err.message:'File non valido: scegli il .json ricevuto dal report.')}t.value=''}
+    catch(err){toast(err.message&&err.message.includes('Manutenzioni')?err.message:'File non valido: scegli il file -dati.txt o il backup ricevuto.')}t.value=''}
 });
 let lastY=0;
 window.addEventListener('scroll',()=>{const y=window.scrollY,d=y-lastY;if(Math.abs(d)<8)return;
   document.body.classList.toggle('hide-bars',d>0&&y>80);lastY=y},{passive:true});
-render();
+avvio();
 })();
 </script>
 </body>
